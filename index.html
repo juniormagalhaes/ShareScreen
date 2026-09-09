@@ -341,7 +341,14 @@
                 const options = { debug: 1, config: {'iceServers': [{ url: 'stun:stun.l.google.com:19302' }]} };
                 peer = new Peer(options);
                 peer.on('open', id => { myId = id; resolve(id); });
+                peer.on('disconnected', () => {
+                    console.log('Desconectado do servidor de sinalização. Reconectando...');
+                    if (!peer.destroyed) {
+                        peer.reconnect();
+                    }
+                });
                 peer.on('error', async err => {
+                    if (!peer || peer.destroyed) return;
                     console.error('PeerJS Error:', err);
                     if (err.type === 'peer-unavailable') {
                         if (isJoining && hostId) {
