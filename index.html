@@ -227,13 +227,13 @@
                 <div id="side-participants" class="sidebar-content active">
                     <div id="participants-list"></div>
                 </div>
-                <div id="side-chat" class="sidebar-content" style="display: flex; flex-direction: column;">
-                    <div class="chat-messages" id="chat-messages" style="flex: 1;"></div>
-                    <div class="chat-input-area">
+                <div id="side-chat" class="sidebar-content" style="display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+                    <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding: 1rem; margin-bottom: 0;"></div>
+                    <div class="chat-input-area" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;">
                         <input type="file" id="file-input" style="display: none;" onchange="handleFileUpload(event)">
-                        <button class="icon-btn" style="color: var(--text-muted); background: rgba(255,255,255,0.1); border-radius: 8px; width: 42px; height: 42px;" onclick="document.getElementById('file-input').click()" title="Enviar Arquivo"><i class="fa-solid fa-paperclip"></i></button>
+                        <button class="icon-btn" style="color: var(--text-muted); background: rgba(255,255,255,0.1); border-radius: 8px; width: 42px; height: 42px; flex-shrink: 0;" onclick="document.getElementById('file-input').click()" title="Enviar Arquivo"><i class="fa-solid fa-paperclip"></i></button>
                         <input type="text" id="chat-input" placeholder="Mensagem..." onkeypress="handleChatKeyPress(event)">
-                        <button class="btn-primary" style="width: auto; padding: 0 1rem;" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                        <button class="btn-primary" style="width: auto; padding: 0 1rem; flex-shrink: 0;" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
                 </div>
             </div>
