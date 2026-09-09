@@ -370,6 +370,25 @@
             });
         }
 
+        function checkRoomActive(targetId) {
+            return new Promise((resolve) => {
+                const tempPeer = new Peer({ config: {'iceServers': [{ url: 'stun:stun.l.google.com:19302' }]} });
+                let resolved = false;
+                const finish = (alive) => {
+                    if (resolved) return;
+                    resolved = true;
+                    tempPeer.destroy();
+                    resolve(alive);
+                };
+                tempPeer.on('open', () => {
+                    const conn = tempPeer.connect(targetId, { reliable: true });
+                    conn.on('open', () => finish(true));
+                    setTimeout(() => finish(false), 3000);
+                });
+                tempPeer.on('error', () => finish(false));
+            });
+        }
+
         async function createRoom(forcePassword = null) {
             myNickname = document.getElementById('nickname').value.trim() || 'Apresentador';
             roomPassword = forcePassword !== null ? forcePassword : document.getElementById('host-password').value;
@@ -382,9 +401,21 @@
             const btn = document.getElementById('btn-create');
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando...';
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
             }
             try {
+                const snapshot = await database.ref('rooms/' + currentRoomName).once('value');
+                if (snapshot.exists() && snapshot.val().hostId) {
+                    const isActive = await checkRoomActive(snapshot.val().hostId);
+                    if (isActive) {
+                        alert("Esta sala já está ativa! Por favor, escolha outro nome ou acesse a aba 'Entrar na Sala'.");
+                        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus"></i> Criar e Entrar'; }
+                        return;
+                    }
+                }
+
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando...';
+
                 await initPeer();
                 isHost = true; hostId = myId;
                 
