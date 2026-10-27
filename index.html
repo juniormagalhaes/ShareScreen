@@ -1,842 +1,1795 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShareScreen P2P PRO</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --surface-color: rgba(30, 41, 59, 0.7);
-            --surface-border: rgba(255, 255, 255, 0.1);
-            --primary-color: #3b82f6;
-            --primary-hover: #2563eb;
-            --danger-color: #ef4444;
-            --danger-hover: #dc2626;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --glass-blur: blur(16px);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel Nacional de Votação por Hora — Eleições 2026 | Logs oficiais das urnas (TSE)</title>
+<meta name="description" content="Análise transparente dos registros 'O voto do eleitor foi computado' nos logs oficiais das urnas eletrônicas das Eleições 2026, publicados pelo TSE: eventos por hora, por estado, município e seção.">
+<meta name="theme-color" content="#060a14">
+<!-- Fontes opcionais: se não carregarem (offline), o painel usa as fontes do sistema. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   1. DESIGN SYSTEM — tokens, base e utilitários
+   ===================================================================== */
+:root{
+  --bg:#060a14; --bg-2:#0a1120; --card:rgba(15,23,42,.72); --card-2:rgba(255,255,255,.035);
+  --borda:rgba(148,163,184,.13); --borda-2:rgba(148,163,184,.26);
+  --txt:#e7ecf6; --muted:#97a3bb; --fraco:#66738c;
+  --verde:#34d399; --verde-2:#10b981; --amarelo:#fbbf24; --azul:#60a5fa; --rosa:#f472b6;
+  --roxo:#a78bfa; --vermelho:#f87171; --ciano:#22d3ee;
+  --raio:18px; --raio-s:11px; --sombra:0 18px 50px -20px rgba(0,0,0,.75);
+  --fonte:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --fonte-t:'Outfit','Inter',system-ui,'Segoe UI',sans-serif;
+  --mono:ui-monospace,'Cascadia Code','SFMono-Regular',Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{color-scheme:dark;scroll-behavior:smooth}
+body{margin:0;font-family:var(--fonte);background:var(--bg);color:var(--txt);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+   radial-gradient(900px 520px at 6% -12%,rgba(52,211,153,.17),transparent 62%),
+   radial-gradient(820px 520px at 102% -4%,rgba(96,165,250,.15),transparent 60%),
+   radial-gradient(760px 620px at 50% 125%,rgba(251,191,36,.08),transparent 60%)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.35;
+  background-image:linear-gradient(rgba(148,163,184,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.05) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(ellipse at top,#000 20%,transparent 75%)}
+a{color:var(--azul)} a:hover{color:#93c5fd}
+h1,h2,h3{font-family:var(--fonte-t);letter-spacing:-.01em;margin:0}
+h2{font-size:1.08rem;font-weight:600}
+h3{font-size:.95rem;font-weight:600}
+small,.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.86em}
+code{background:rgba(148,163,184,.12);padding:.08em .38em;border-radius:6px}
+[hidden]{display:none!important}
+.container{max-width:1440px;margin:0 auto;padding:0 22px 40px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ---------- Cartões ---------- */
+.card{background:var(--card);border:1px solid var(--borda);border-radius:var(--raio);padding:20px;box-shadow:var(--sombra);
+  backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);position:relative}
+.card-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.card-cab .tit{display:flex;align-items:center;gap:10px}
+.ic-tit{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(52,211,153,.22),rgba(96,165,250,.18));border:1px solid var(--borda-2)}
+.ic-tit svg{width:17px;height:17px}
+.secao{margin-top:18px}
+.grid-2{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+@media (max-width:1060px){.grid-2{grid-template-columns:1fr}}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            background-image: radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
-                              radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
-            color: var(--text-main);
-            min-height: 100vh;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+/* ---------- Botões ---------- */
+.btn{--c:var(--txt);display:inline-flex;align-items:center;gap:8px;border:1px solid var(--borda-2);background:var(--card-2);color:var(--c);
+  padding:9px 15px;border-radius:12px;font:600 .86rem var(--fonte);cursor:pointer;transition:transform .15s,background .2s,border-color .2s,box-shadow .2s;white-space:nowrap}
+.btn:hover:not(:disabled){background:rgba(255,255,255,.07);border-color:rgba(148,163,184,.42);transform:translateY(-1px)}
+.btn:active:not(:disabled){transform:translateY(0)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn svg{width:16px;height:16px}
+.btn-pri{background:linear-gradient(135deg,#10b981,#0ea5a4 55%,#3b82f6);border-color:transparent;color:#03140f;box-shadow:0 8px 24px -10px rgba(16,185,129,.8)}
+.btn-pri:hover:not(:disabled){background:linear-gradient(135deg,#34d399,#14b8a6 55%,#60a5fa);box-shadow:0 10px 30px -10px rgba(16,185,129,.95)}
+.btn-alerta{color:var(--amarelo);border-color:rgba(251,191,36,.35)}
+.btn-perigo{color:var(--vermelho);border-color:rgba(248,113,113,.32)}
+.btn-mini{padding:5px 10px;font-size:.76rem;border-radius:9px}
+.grupo-btn{display:flex;gap:8px;flex-wrap:wrap}
+.seg{display:inline-flex;background:rgba(2,6,23,.55);border:1px solid var(--borda);border-radius:12px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;color:var(--muted);font:600 .8rem var(--fonte);padding:7px 12px;border-radius:9px;cursor:pointer;transition:all .2s}
+.seg button:hover{color:var(--txt)}
+.seg button.ativo{background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(96,165,250,.22));color:#fff;box-shadow:inset 0 0 0 1px rgba(148,163,184,.25)}
 
-        .glass {
-            background: var(--surface-color);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--surface-border);
-            border-radius: 16px;
-        }
+/* ---------- Formulários ---------- */
+.campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.campo{display:flex;flex-direction:column;gap:5px;min-width:0}
+.campo label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+select,input[type=number],input[type=search],input[type=text]{width:100%;background:rgba(2,6,23,.6);color:var(--txt);border:1px solid var(--borda-2);border-radius:10px;
+  padding:9px 11px;font:500 .88rem var(--fonte);outline:none;transition:border-color .2s,box-shadow .2s}
+select:focus,input:focus{border-color:var(--verde);box-shadow:0 0 0 3px rgba(52,211,153,.18)}
+select:disabled{opacity:.5}
+.chk{display:flex;align-items:center;gap:8px;font-size:.84rem;color:var(--muted);cursor:pointer;user-select:none}
+.chk input{accent-color:var(--verde);width:16px;height:16px}
+.dica{font-size:.78rem;color:var(--fraco);margin-top:8px}
 
-        #lobby {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            padding: 2rem;
-        }
+/* =====================================================================
+   2. CABEÇALHO
+   ===================================================================== */
+.topo{position:sticky;top:0;z-index:30;background:rgba(6,10,20,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--borda);margin-bottom:20px}
+.topo-in{max-width:1440px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.marca{display:flex;align-items:center;gap:14px;min-width:0}
+.logo{width:46px;height:46px;border-radius:14px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,#10b981,#0ea5a4 50%,#2563eb);box-shadow:0 10px 30px -10px rgba(16,185,129,.9)}
+.logo svg{width:26px;height:26px}
+.marca h1{font-size:clamp(1.12rem,2.2vw,1.5rem);font-weight:700;background:linear-gradient(90deg,#fff,#c7f9e5 60%,#bfdbfe);-webkit-background-clip:text;background-clip:text;color:transparent}
+.marca p{margin:2px 0 0;font-size:.84rem;color:var(--muted)}
+.meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
+.meta .item{display:flex;flex-direction:column;line-height:1.25}
+.meta .item b{color:var(--txt);font-weight:600;font-size:.8rem}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;font-weight:700;font-size:.78rem;border:1px solid var(--borda-2);background:var(--card-2)}
+.pill .ponto{width:9px;height:9px;border-radius:50%;background:var(--fraco)}
+.pill.ativo{color:var(--verde);border-color:rgba(52,211,153,.4)} .pill.ativo .ponto{background:var(--verde);animation:pulso 1.4s infinite}
+.pill.info{color:var(--azul);border-color:rgba(96,165,250,.4)} .pill.info .ponto{background:var(--azul);animation:pulso 1.4s infinite}
+.pill.alerta{color:var(--amarelo);border-color:rgba(251,191,36,.4)} .pill.alerta .ponto{background:var(--amarelo)}
+.pill.ok{color:var(--verde);border-color:rgba(52,211,153,.4)} .pill.ok .ponto{background:var(--verde)}
+.pill.erro{color:var(--vermelho);border-color:rgba(248,113,113,.4)} .pill.erro .ponto{background:var(--vermelho)}
+@keyframes pulso{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
 
-        .lobby-container {
-            width: 100%;
-            max-width: 450px;
-            padding: 2.5rem;
-            text-align: center;
-            animation: fadeIn 0.5s ease-out;
-        }
+/* ---------- Faixas de aviso ---------- */
+.banner{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-radius:14px;border:1px solid;font-size:.88rem;margin-bottom:14px;animation:surgir .4s ease}
+.banner svg{flex:none;width:20px;height:20px;margin-top:1px}
+.banner b{font-weight:700}
+.banner.aviso{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.35);color:#fde68a}
+.banner.info{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.32);color:#bfdbfe}
+.banner.sucesso{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.34);color:#a7f3d0}
+.banner.erro{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.35);color:#fecaca}
+@keyframes surgir{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 
-        .logo {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+/* =====================================================================
+   3. COLETA / IMPORTAÇÃO
+   ===================================================================== */
+.progresso{height:10px;border-radius:99px;background:rgba(2,6,23,.7);border:1px solid var(--borda);overflow:hidden;margin:14px 0 8px}
+.progresso i{display:block;height:100%;width:0;background:linear-gradient(90deg,#10b981,#22d3ee,#60a5fa);background-size:200% 100%;animation:fluxo 2.4s linear infinite;transition:width .5s ease;border-radius:99px}
+@keyframes fluxo{to{background-position:-200% 0}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin-top:10px}
+.stat{background:rgba(2,6,23,.45);border:1px solid var(--borda);border-radius:11px;padding:8px 10px}
+.stat span{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--fraco);font-weight:600}
+.stat b{font:700 1rem var(--fonte-t)}
+.atual{font-size:.78rem;color:var(--muted);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.2em}
+.teste{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px}
+.teste li{display:grid;grid-template-columns:20px 1fr;gap:2px 8px;align-items:start;font-size:.83rem;padding:8px 10px;border-radius:10px;background:rgba(2,6,23,.45);border:1px solid var(--borda)}
+.teste li small{grid-column:2;font-size:.75rem;word-break:break-word}
+.teste .ic{width:16px;height:16px;border-radius:50%;margin-top:2px;border:2px solid var(--fraco)}
+.teste li.executando .ic{border-color:var(--azul);border-top-color:transparent;animation:gira .8s linear infinite}
+.teste li.ok .ic{border:0;background:var(--verde) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2303140f' stroke-width='4'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center/11px no-repeat}
+.teste li.falha .ic{border:0;background:var(--vermelho) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23200' stroke-width='4'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center/10px no-repeat}
+.teste li.falha small{color:#fca5a5}
+@keyframes gira{to{transform:rotate(360deg)}}
+.drop{border:1.5px dashed var(--borda-2);border-radius:14px;padding:22px 16px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(2,6,23,.35)}
+.drop:hover,.drop.sobre{border-color:var(--verde);background:rgba(52,211,153,.06)}
+.drop svg{width:34px;height:34px;color:var(--verde);margin-bottom:6px}
+.drop b{display:block;font-size:.95rem}
+.drop small{display:block;margin-top:4px}
 
-        .form-group { margin-bottom: 1.5rem; text-align: left; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-muted); font-weight: 500; }
+/* =====================================================================
+   4. INDICADORES (KPIs)
+   ===================================================================== */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-top:18px}
+@media (max-width:1200px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:720px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:440px){.kpis{grid-template-columns:1fr}}
+.kpi{padding:16px 16px 14px;overflow:hidden;transition:transform .25s,border-color .25s}
+.kpi:hover{transform:translateY(-3px);border-color:var(--borda-2)}
+.kpi::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--cor,var(--verde));opacity:.9}
+.kpi::after{content:"";position:absolute;width:140px;height:140px;right:-50px;top:-60px;border-radius:50%;background:var(--cor,var(--verde));opacity:.08;filter:blur(8px)}
+.kpi .rot{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;display:flex;gap:7px;align-items:center}
+.kpi .rot svg{width:15px;height:15px;color:var(--cor,var(--verde))}
+.kpi .val{font:700 clamp(1.45rem,2.3vw,2rem)/1.15 var(--fonte-t);margin:8px 0 4px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi .sub{font-size:.76rem;color:var(--muted);min-height:2.3em}
+.conferencia{margin-top:14px;padding:12px 16px;border-radius:14px;border:1px solid var(--borda);background:rgba(2,6,23,.45);font-size:.86rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.conferencia .tag{font-weight:700;border-radius:8px;padding:2px 9px;font-size:.76rem}
+.tag.ok{background:rgba(52,211,153,.16);color:var(--verde)} .tag.dif{background:rgba(251,191,36,.15);color:var(--amarelo)} .tag.na{background:rgba(148,163,184,.14);color:var(--muted)}
 
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--surface-border);
-            background: rgba(15, 23, 42, 0.5);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+/* =====================================================================
+   5. GRÁFICO
+   ===================================================================== */
+.graf-wrap{position:relative;height:380px;margin-top:6px}
+@media (max-width:720px){.graf-wrap{height:300px}}
+#grafico{width:100%;height:100%;display:block;cursor:crosshair}
+.tooltip{position:fixed;z-index:60;pointer-events:none;background:rgba(10,17,32,.96);border:1px solid var(--borda-2);border-radius:12px;padding:10px 12px;font-size:.8rem;min-width:170px;box-shadow:var(--sombra);opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+.tooltip.vis{opacity:1;transform:none}
+.tooltip .th{font-weight:700;margin-bottom:6px;font-family:var(--fonte-t)}
+.tooltip .tr{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.tooltip .tr span{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.tooltip i,.legenda i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.legenda{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;font-size:.8rem;color:var(--muted)}
+.legenda span{display:flex;align-items:center;gap:6px}
+.legenda b{color:var(--txt);font-weight:600}
+.nota{font-size:.76rem;color:var(--fraco);margin-top:8px}
+.controles-graf{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
-        input[type="text"]:focus, input[type="password"]:focus { border-color: var(--primary-color); }
+/* =====================================================================
+   6. ABAS E TABELAS
+   ===================================================================== */
+.abas{display:flex;gap:4px;border-bottom:1px solid var(--borda);margin:-4px -4px 14px;overflow-x:auto;scrollbar-width:thin}
+.abas button{border:0;background:transparent;color:var(--muted);font:600 .86rem var(--fonte);padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .2s,border-color .2s}
+.abas button:hover{color:var(--txt)}
+.abas button.ativo{color:#fff;border-bottom-color:var(--verde)}
+.barra-tab{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}
+.barra-tab .esq{display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex:1}
+.barra-tab input[type=search]{max-width:280px}
+.barra-tab select{width:auto}
+.tab-scroll{overflow:auto;border:1px solid var(--borda);border-radius:13px;max-height:560px}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+thead th{position:sticky;top:0;z-index:1;background:#0d1628;text-align:left;font-weight:600;color:var(--muted);font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--borda-2);cursor:pointer;user-select:none;white-space:nowrap}
+thead th:hover{color:var(--txt)}
+thead th.ord::after{content:" ▾";color:var(--verde)} thead th.ord.asc::after{content:" ▴"}
+thead th.nosort{cursor:default}
+tbody td{padding:9px 12px;border-bottom:1px solid rgba(148,163,184,.07);vertical-align:top}
+tbody tr:hover td{background:rgba(255,255,255,.025)}
+tfoot td{padding:10px 12px;font-weight:700;border-top:1px solid var(--borda-2);background:rgba(2,6,23,.5)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.cel-barra{position:relative}
+.cel-barra::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:var(--p,0%);background:linear-gradient(90deg,rgba(52,211,153,.05),rgba(52,211,153,.22));border-radius:0 6px 6px 0;max-width:100%}
+.cel-barra span{position:relative}
+.pos{color:var(--verde)} .neg{color:var(--vermelho)}
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:700;white-space:nowrap}
+.chip.ok{background:rgba(52,211,153,.14);color:var(--verde)}
+.chip.alerta{background:rgba(251,191,36,.14);color:var(--amarelo)}
+.chip.erro{background:rgba(248,113,113,.14);color:var(--vermelho)}
+.chip.neutro{background:rgba(148,163,184,.14);color:var(--muted)}
+.chip.tse{background:rgba(96,165,250,.14);color:var(--azul)}
+.chip.imp{background:rgba(167,139,250,.16);color:var(--roxo)}
+.paginacao{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:10px;font-size:.8rem;color:var(--muted)}
+.vazio{padding:34px 16px;text-align:center;color:var(--muted)}
+.vazio svg{width:38px;height:38px;color:var(--fraco);display:block;margin:0 auto 10px}
+.atividade{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:.78rem;max-height:520px;overflow:auto;border:1px solid var(--borda);border-radius:13px}
+.atividade li{padding:7px 12px;border-bottom:1px solid rgba(148,163,184,.07);display:grid;grid-template-columns:auto auto 1fr;gap:10px}
+.atividade time{color:var(--fraco)}
+.atividade .n{font-weight:700;text-transform:uppercase;font-size:.7rem;padding-top:1px}
+.n.info{color:var(--azul)} .n.aviso{color:var(--amarelo)} .n.erro{color:var(--vermelho)} .n.ok{color:var(--verde)}
+.metodo{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;font-size:.87rem}
+.metodo section{background:rgba(2,6,23,.4);border:1px solid var(--borda);border-radius:14px;padding:16px}
+.metodo h3{margin-bottom:8px;color:#d1fae5}
+.metodo ul,.metodo ol{margin:6px 0;padding-left:20px}
+.metodo li{margin:4px 0}
+.metodo table{font-size:.8rem;margin-top:6px}
+.metodo td,.metodo th{padding:6px 8px;border-bottom:1px solid var(--borda)}
+.metodo th{position:static;cursor:default}
+.autoteste li.ok::marker{color:var(--verde)} .autoteste li.falha{color:#fca5a5}
 
-        .tabs { display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--surface-border); padding-bottom: 0.5rem; }
-        .tab { flex: 1; padding: 0.5rem; cursor: pointer; font-weight: 600; color: var(--text-muted); transition: color 0.2s; }
-        .tab.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
-
-        button {
-            width: 100%; padding: 0.75rem; border-radius: 8px; border: none; font-family: 'Inter', sans-serif;
-            font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.1s, background-color 0.2s, opacity 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-
-        button:active { transform: scale(0.98); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .btn-primary { background: var(--primary-color); color: #fff; }
-        .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
-        .btn-danger { background: var(--danger-color); color: #fff; }
-        .btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
-
-        #room { display: none; height: 100vh; flex-direction: column; }
-        .top-bar { padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--surface-border); z-index: 10; }
-        .room-info { display: flex; align-items: center; gap: 1rem; }
-        .room-id-badge { background: rgba(59, 130, 246, 0.2); color: #93c5fd; padding: 0.4rem 0.8rem; border-radius: 6px; font-family: monospace; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .room-id-badge:hover { background: rgba(59, 130, 246, 0.3); }
-
-        .main-content { display: flex; flex: 1; overflow: hidden; }
-
-        .video-area { flex: 1; padding: 1rem; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); grid-auto-rows: 1fr; overflow-y: auto; position: relative; }
-        .video-container { position: relative; background: #000; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid transparent; transition: border-color 0.3s; }
-        .video-container.speaking { border-color: var(--primary-color); box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
-        video { width: 100%; height: 100%; object-fit: contain; }
-
-        .video-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem; background: linear-gradient(transparent, rgba(0,0,0,0.8)); display: flex; justify-content: space-between; align-items: flex-end; opacity: 0; transition: opacity 0.3s; }
-        .video-container:hover .video-overlay { opacity: 1; }
-        .video-label { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); padding: 0.3rem 0.8rem; border-radius: 4px; font-weight: 500; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
-        .video-controls { display: flex; gap: 8px; }
-
-        .icon-btn { background: rgba(255, 255, 255, 0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
-        .icon-btn:hover { background: rgba(255, 255, 255, 0.4); }
-        .volume-slider { width: 60px; cursor: pointer; }
-
-        .sidebar { width: 320px; border-left: 1px solid var(--surface-border); display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.6); backdrop-filter: var(--glass-blur); }
-        .sidebar-header { display: flex; padding: 1rem; border-bottom: 1px solid var(--surface-border); }
-        .sidebar-tab { flex: 1; text-align: center; padding: 0.5rem; cursor: pointer; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; }
-        .sidebar-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-        .sidebar-content { flex: 1; overflow-y: auto; padding: 1rem; display: none; }
-        .sidebar-content.active { display: block; }
-
-        .participant-item { display: flex; align-items: center; gap: 10px; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; }
-
-        .chat-messages { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem; }
-        .msg-bubble { background: rgba(255, 255, 255, 0.1); padding: 0.8rem; border-radius: 8px; border-top-left-radius: 0; align-self: flex-start; max-width: 90%; word-wrap: break-word; }
-        .msg-bubble.mine { background: rgba(59, 130, 246, 0.3); border-top-left-radius: 8px; border-top-right-radius: 0; align-self: flex-end; }
-        .msg-author { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
-        .chat-input-area { display: flex; gap: 8px; margin-top: auto; }
-        .file-download-link { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 6px; color: var(--text-main); text-decoration: none; font-size: 0.9rem; transition: background 0.2s; word-break: break-all; }
-        .file-download-link:hover { background: rgba(0,0,0,0.4); }
-        .msg-bubble.mine .file-download-link { background: rgba(255,255,255,0.1); }
-        .msg-bubble.mine .file-download-link:hover { background: rgba(255,255,255,0.2); }
-
-        .bottom-bar { padding: 1rem 2rem; border-top: 1px solid var(--surface-border); display: flex; justify-content: center; align-items: center; gap: 1.5rem; z-index: 10; background: var(--surface-color); backdrop-filter: var(--glass-blur); }
-        .control-group { display: flex; align-items: center; gap: 1rem; background: rgba(0,0,0,0.2); padding: 0.5rem 1rem; border-radius: 8px; }
-        .toggle-switch { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; }
-        select { background: rgba(255,255,255,0.1); color: white; border: 1px solid var(--surface-border); padding: 0.4rem; border-radius: 4px; outline: none; font-family: 'Inter'; }
-        select option { background: var(--bg-color); color: var(--text-main); }
-
-        #toast-container { position: fixed; bottom: 80px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
-        .toast { background: var(--surface-color); backdrop-filter: blur(8px); border: 1px solid var(--surface-border); padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out forwards; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-
-        /* Responsividade para Mobile */
-        @media (max-width: 768px) {
-            .lobby-container { padding: 1.5rem; margin: 1rem; width: auto; }
-            .top-bar { flex-direction: column; padding: 1rem; gap: 10px; text-align: center; }
-            .main-content { flex-direction: column; }
-            .video-area { grid-template-columns: 1fr; padding: 0.5rem; }
-            .sidebar { width: 100%; height: 350px; flex: none; border-left: none; border-top: 1px solid var(--surface-border); }
-            .bottom-bar { flex-direction: column; padding: 1rem; gap: 1rem; }
-            .control-group { flex-wrap: wrap; justify-content: center; width: 100%; }
-            #btn-share-screen { width: 100% !important; }
-            #toast-container { left: 50%; transform: translateX(-50%); bottom: 180px; width: 90%; align-items: center; }
-            .toast { width: 100%; justify-content: center; text-align: center; }
-        }
-
-    </style>
+/* =====================================================================
+   7. MODAL DE AUDITORIA
+   ===================================================================== */
+dialog{border:1px solid var(--borda-2);border-radius:20px;background:#0a1120;color:var(--txt);padding:0;width:min(1180px,96vw);max-height:92vh;box-shadow:0 40px 120px -20px rgba(0,0,0,.9)}
+dialog::backdrop{background:rgba(2,6,23,.72);backdrop-filter:blur(4px)}
+dialog[open]{animation:surgir .25s ease}
+.modal-cab{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--borda);position:sticky;top:0;background:#0a1120;z-index:2}
+.modal-corpo{padding:18px 20px;overflow:auto;max-height:calc(92vh - 70px)}
+.defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:14px}
+.defs div{background:rgba(2,6,23,.5);border:1px solid var(--borda);border-radius:10px;padding:8px 10px;font-size:.8rem;min-width:0}
+.defs span{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--fraco);font-weight:600}
+.defs b{word-break:break-all;font-weight:600}
+.bruto{font-family:var(--mono);font-size:.74rem;color:#cbd5e1;white-space:pre-wrap;word-break:break-all}
+.fechar{background:transparent;border:1px solid var(--borda-2);color:var(--txt);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:1.2rem}
+footer{margin-top:28px;color:var(--fraco);font-size:.78rem;text-align:center;line-height:1.7}
+.fade-in{animation:surgir .45s ease both}
+</style>
 </head>
 <body>
+<noscript><div class="banner erro" style="margin:20px">Este painel precisa de JavaScript habilitado.</div></noscript>
 
-    <div id="toast-container"></div>
+<!-- ===================================================================
+     CABEÇALHO
+     =================================================================== -->
+<header class="topo">
+  <div class="topo-in">
+    <div class="marca">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#04140f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="2"/><path d="M8 10V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v5"/><path d="M12 14v3M10.5 15.5H13.5"/></svg>
+      </div>
+      <div>
+        <h1>Painel Nacional de Votação por Hora</h1>
+        <p>Análise de registros dos logs oficiais das urnas eletrônicas</p>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="item"><span>Fonte dos dados</span><b><a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener">TSE · resultados.tse.jus.br</a></b></div>
+      <div class="item"><span>Arquivos do TSE gerados em</span><b id="h-geracao">—</b></div>
+      <div class="item"><span>Último processamento</span><b id="h-processamento">—</b></div>
+      <span class="pill" id="h-status" role="status" aria-live="polite"><span class="ponto"></span><span id="h-status-txt">Ocioso</span></span>
+    </div>
+  </div>
+</header>
 
-    <div id="lobby">
-        <div class="lobby-container glass">
-            <div class="logo"><i class="fa-solid fa-desktop"></i> ShareScreen P2P</div>
-            <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Compartilhamento de tela ultrarrápido sem servidores.</p>
-            <div class="form-group">
-                <label>Seu Nickname</label>
-                <input type="text" id="nickname" placeholder="Ex: João Silva" autocomplete="off">
-            </div>
-            <div class="tabs">
-                <div class="tab active" onclick="switchLobbyTab('create')">Criar Sala</div>
-                <div class="tab" onclick="switchLobbyTab('join')">Entrar na Sala</div>
-            </div>
-            <div id="tab-create" class="tab-content active">
-                <div class="form-group">
-                    <label>Nome da Sala (Opcional)</label>
-                    <input type="text" id="create-room-name" placeholder="Ex: sala-de-aula">
-                </div>
-                <div class="form-group">
-                    <label>Senha da Sala (Opcional)</label>
-                    <input type="password" id="host-password" placeholder="Deixe em branco para sala pública">
-                </div>
-                <button class="btn-primary" onclick="createRoom()" id="btn-create"><i class="fa-solid fa-plus"></i> Criar e Entrar</button>
-            </div>
-            <div id="tab-join" class="tab-content">
-                <div class="form-group">
-                    <label>Nome da Sala</label>
-                    <input type="text" id="join-room-id" placeholder="Ex: sala-de-aula">
-                </div>
-                <div class="form-group">
-                    <label>Senha da Sala</label>
-                    <input type="password" id="join-password" placeholder="Senha fornecida pelo Host">
-                </div>
-                <button class="btn-primary" onclick="joinRoom()" id="btn-join"><i class="fa-solid fa-right-to-bracket"></i> Entrar na Sala</button>
-            </div>
+<main class="container">
+  <div id="banner-suporte"></div>
+  <div id="banner-parcial"></div>
+
+  <!-- ===================================================================
+       FILTROS
+       =================================================================== -->
+  <section class="card fade-in" aria-labelledby="t-filtros">
+    <div class="card-cab">
+      <div class="tit"><span class="ic-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18M6 12h12M10 19h4"/></svg></span><h2 id="t-filtros">Filtros</h2></div>
+      <label class="chk"><input type="checkbox" id="f-exterior"> Incluir seções do Exterior (ZZ) no total</label>
+    </div>
+    <div class="campos">
+      <div class="campo"><label for="f-ano">Ano eleitoral</label>
+        <select id="f-ano"><option value="2026">2026</option><option value="2022" disabled>2022 (formato 7z — não suportado)</option></select></div>
+      <div class="campo"><label for="f-turno">Turno</label>
+        <select id="f-turno"><option value="1">1º turno — 04/10/2026</option><option value="2">2º turno — 25/10/2026</option></select></div>
+      <div class="campo"><label for="f-uf">Estado</label><select id="f-uf"></select></div>
+      <div class="campo"><label for="f-mun">Município</label><select id="f-mun" disabled><option value="">Todos</option></select></div>
+      <div class="campo"><label for="f-zona">Zona eleitoral</label><select id="f-zona" disabled><option value="">Todas</option></select></div>
+      <div class="campo"><label for="f-secao">Seção eleitoral</label><select id="f-secao" disabled><option value="">Todas</option></select></div>
+      <div class="campo"><label for="f-hini">Hora inicial</label><select id="f-hini"></select></div>
+      <div class="campo"><label for="f-hfim">Hora final</label><select id="f-hfim"></select></div>
+      <div class="campo"><label for="f-tipo">Tipo de evento</label><select id="f-tipo"></select></div>
+    </div>
+    <p class="dica" id="f-tipo-desc"></p>
+  </section>
+
+  <!-- ===================================================================
+       COLETA AUTOMÁTICA + IMPORTAÇÃO MANUAL
+       =================================================================== -->
+  <div class="grid-2 secao">
+    <section class="card fade-in" aria-labelledby="t-coleta">
+      <div class="card-cab">
+        <div class="tit"><span class="ic-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span><h2 id="t-coleta">Coleta direta dos logs do TSE</h2></div>
+        <button class="btn btn-mini" id="btn-testar" type="button">Testar conexão</button>
+      </div>
+      <p class="dica" style="margin-top:-6px">O escopo da coleta segue os filtros de <b>Estado / Município / Zona / Seção</b>. As requisições vão diretamente do seu navegador ao servidor oficial do TSE.</p>
+      <div class="campos" style="margin-top:10px">
+        <div class="campo"><label for="c-limite">Limite de seções (0 = todas)</label><input type="number" id="c-limite" min="0" step="10" value="200"></div>
+        <div class="campo"><label for="c-ordem">Seleção</label><select id="c-ordem"><option value="seq">Sequencial</option><option value="ale">Amostra aleatória</option></select></div>
+        <div class="campo"><label for="c-conc">Concorrência</label><select id="c-conc"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>6</option></select></div>
+        <div class="campo"><label for="c-intervalo">Pausa entre requisições (ms)</label><input type="number" id="c-intervalo" min="0" step="50" value="200"></div>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
+        <label class="chk"><input type="checkbox" id="c-revalidar"> Revalidar já processadas (baixa o log só se o hash mudou)</label>
+      </div>
+      <div class="grupo-btn" style="margin-top:14px">
+        <button class="btn btn-pri" id="btn-iniciar" type="button"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg><span>Iniciar coleta</span></button>
+        <button class="btn btn-alerta" id="btn-pausar" type="button" disabled><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>Pausar</button>
+        <button class="btn" id="btn-validacao" type="button" title="Coleta as 34 seções reais de Porto Walter/AC e confere com o comparecimento oficial">Validação rápida (Porto Walter/AC)</button>
+        <button class="btn btn-perigo" id="btn-limpar" type="button">Limpar dados do turno</button>
+      </div>
+      <div class="progresso" aria-hidden="true"><i id="c-barra"></i></div>
+      <div class="atual" id="c-atual">Nenhuma coleta em andamento.</div>
+      <div class="stats" id="c-stats"></div>
+      <ul class="teste" id="teste-resultado" hidden></ul>
+    </section>
+
+    <section class="card fade-in" aria-labelledby="t-import">
+      <div class="card-cab">
+        <div class="tit"><span class="ic-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 18v-6m-3 3h6"/></svg></span><h2 id="t-import">Importar arquivos baixados</h2></div>
+      </div>
+      <label class="drop" id="drop" for="imp-arquivos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+        <b>Arraste ou selecione arquivos</b>
+        <small><code>-log.jez</code> (2026), <code>.zip</code> com vários <code>.jez</code>, ou <code>logd.dat</code> já descompactado</small>
+        <input type="file" id="imp-arquivos" multiple accept=".jez,.logjez,.zip,.dat,.txt,.log" class="sr">
+      </label>
+      <p class="dica">Tudo é processado localmente com APIs nativas (<code>DecompressionStream</code>). Arquivos com nome oficial (ex.: <code>o03220ac0106600040077-log.jez</code>) são associados à seção e <b>não são contados duas vezes</b> se a seção também for coletada online. Pacotes <b>7z/LZMA</b> (padrão de 2022) exigem biblioteca externa: descompacte-os antes com o 7-Zip e importe o <code>logd.dat</code>.</p>
+      <div class="banner info" style="margin:12px 0 0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+        <div>Os arquivos importados recebem a etiqueta <span class="chip imp">Importado</span>; os baixados do servidor oficial, <span class="chip tse">TSE</span>. O painel não contém nenhum dado de exemplo nos totais. As linhas de teste do parser ficam isoladas na aba <b>Metodologia</b>.</div></div>
+    </section>
+  </div>
+
+  <!-- ===================================================================
+       INDICADORES PRINCIPAIS
+       =================================================================== -->
+  <section class="kpis" aria-label="Indicadores principais">
+    <article class="card kpi" style="--cor:var(--verde)"><div class="rot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><rect x="3" y="4" width="18" height="16" rx="3"/></svg><span id="k1-rot">Eventos de voto computado</span></div><div class="val" id="k1">—</div><div class="sub" id="k1-sub">identificados nos logs processados</div></article>
+    <article class="card kpi" style="--cor:var(--azul)"><div class="rot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M9 9V5h6v4"/></svg>Urnas processadas</div><div class="val" id="k2">—</div><div class="sub" id="k2-sub">seções com log válido</div></article>
+    <article class="card kpi" style="--cor:var(--ciano)"><div class="rot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Logs válidos</div><div class="val" id="k3">—</div><div class="sub" id="k3-sub">—</div></article>
+    <article class="card kpi" style="--cor:var(--amarelo)"><div class="rot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 9 9h-9z"/></svg>Cobertura da coleta</div><div class="val" id="k4">—</div><div class="sub" id="k4-sub">—</div></article>
+    <article class="card kpi" style="--cor:var(--rosa)"><div class="rot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Linhas não reconhecidas</div><div class="val" id="k5">—</div><div class="sub" id="k5-sub">—</div></article>
+  </section>
+  <div class="conferencia" id="conferencia"></div>
+
+  <!-- ===================================================================
+       GRÁFICO PRINCIPAL
+       =================================================================== -->
+  <section class="card secao fade-in" aria-labelledby="t-grafico">
+    <div class="card-cab">
+      <div class="tit"><span class="ic-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>
+        <div><h2 id="t-grafico">Eventos por hora</h2><small id="g-sub">Horário local registrado pela urna</small></div></div>
+      <div class="controles-graf">
+        <div class="seg" id="g-modo" role="tablist" aria-label="Visualização">
+          <button data-modo="brasil" class="ativo" id="g-modo-brasil">Brasil / escopo</button>
+          <button data-modo="estados" id="g-modo-estados">Estados</button>
+          <button data-modo="municipios" id="g-modo-municipios">Municípios</button>
+          <button data-modo="secao" id="g-modo-secao">Seção</button>
         </div>
+        <div class="seg" id="g-tipo" aria-label="Tipo de gráfico">
+          <button data-v="barras" class="ativo" id="g-tipo-barras">Barras</button>
+          <button data-v="linhas" id="g-tipo-linhas">Linhas</button>
+        </div>
+        <div class="seg" id="g-escala" aria-label="Escala">
+          <button data-v="abs" class="ativo" id="g-escala-abs">Absoluto</button>
+          <button data-v="pct" id="g-escala-pct">% do total</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="g-recortar" checked> Ocultar horas vazias</label>
+      </div>
+    </div>
+    <div class="graf-wrap"><canvas id="grafico" role="img" aria-label="Gráfico de eventos de voto computado por hora"></canvas></div>
+    <div class="legenda" id="g-legenda"></div>
+    <p class="nota" id="g-nota"></p>
+  </section>
+
+  <!-- ===================================================================
+       TABELAS DETALHADAS
+       =================================================================== -->
+  <section class="card secao fade-in" aria-label="Tabelas detalhadas">
+    <div class="abas" role="tablist">
+      <button class="ativo" data-aba="hora" id="aba-hora">Por hora</button>
+      <button data-aba="uf" id="aba-uf">Por estado</button>
+      <button data-aba="mun" id="aba-mun">Por município</button>
+      <button data-aba="arq" id="aba-arq">Arquivos processados</button>
+      <button data-aba="ativ" id="aba-ativ">Atividade e erros</button>
+      <button data-aba="metodo" id="aba-metodo">Metodologia e limitações</button>
     </div>
 
-    <div id="room">
-        <div class="top-bar glass">
-            <div class="room-info">
-                <div class="logo" style="font-size: 1.5rem; margin: 0;"><i class="fa-solid fa-desktop"></i></div>
-                <div class="room-id-badge" onclick="copyRoomId()" title="Clique para copiar link convite">ID: <span id="display-room-id">...</span> <i class="fa-regular fa-copy"></i></div>
-            </div>
-            <button class="btn-danger" style="width: auto; padding: 0.5rem 1rem;" onclick="leaveRoom()">Sair da Sala</button>
-        </div>
-        <div class="main-content">
-            <div class="video-area" id="video-grid"></div>
-            <div class="sidebar">
-                <div class="sidebar-header">
-                    <div class="sidebar-tab active" onclick="switchSidebarTab('participants')"><i class="fa-solid fa-users"></i> Pessoas (<span id="part-count">1</span>)</div>
-                    <div class="sidebar-tab" onclick="switchSidebarTab('chat')"><i class="fa-solid fa-comments"></i> Chat</div>
-                </div>
-                <div id="side-participants" class="sidebar-content active">
-                    <div id="participants-list"></div>
-                </div>
-                <div id="side-chat" class="sidebar-content" style="display: flex; flex-direction: column; padding: 0; overflow: hidden;">
-                    <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding: 1rem; margin-bottom: 0;"></div>
-                    <div class="chat-input-area" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;">
-                        <input type="file" id="file-input" style="display: none;" onchange="handleFileUpload(event)">
-                        <button class="icon-btn" style="color: var(--text-muted); background: rgba(255,255,255,0.1); border-radius: 8px; width: 42px; height: 42px; flex-shrink: 0;" onclick="document.getElementById('file-input').click()" title="Enviar Arquivo"><i class="fa-solid fa-paperclip"></i></button>
-                        <input type="text" id="chat-input" placeholder="Mensagem..." onkeypress="handleChatKeyPress(event)">
-                        <button class="btn-primary" style="width: auto; padding: 0 1rem; flex-shrink: 0;" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="bottom-bar">
-            <div class="control-group">
-                <label class="toggle-switch"><input type="checkbox" id="share-audio"> Compartilhar Áudio</label>
-                <select id="video-quality">
-                    <option value="1080">1080p / 60fps (Alta Qualidade)</option>
-                    <option value="720" selected>720p / 30fps (Padrão)</option>
-                    <option value="480">480p (Economia)</option>
-                </select>
-            </div>
-            <button id="btn-share-screen" class="btn-primary" style="width: 250px;" onclick="toggleScreenShare()"><i class="fa-solid fa-display"></i> Compartilhar Minha Tela</button>
-        </div>
+    <div data-painel="hora">
+      <div class="barra-tab"><div class="esq"><input type="search" id="busca-hora" placeholder="Buscar (ex.: 10h)" aria-label="Buscar na tabela por hora"></div>
+        <div class="grupo-btn"><button class="btn btn-mini" id="exp-nacional">CSV por hora</button><button class="btn btn-mini" id="exp-relatorio">Relatório</button></div></div>
+      <div id="tab-hora"></div>
     </div>
+    <div data-painel="uf" hidden>
+      <div class="barra-tab"><div class="esq"><input type="search" id="busca-uf" placeholder="Buscar estado" aria-label="Buscar estado"></div>
+        <div class="grupo-btn"><button class="btn btn-mini" id="exp-uf">CSV por estado</button></div></div>
+      <div id="tab-uf"></div>
+    </div>
+    <div data-painel="mun" hidden>
+      <div class="barra-tab"><div class="esq"><input type="search" id="busca-mun" placeholder="Buscar município" aria-label="Buscar município"><small id="mun-info"></small></div>
+        <div class="grupo-btn"><button class="btn btn-mini" id="exp-mun">CSV por município</button></div></div>
+      <div id="tab-mun"></div>
+    </div>
+    <div data-painel="arq" hidden>
+      <div class="barra-tab"><div class="esq"><input type="search" id="busca-arq" placeholder="Buscar município, seção, hash…" aria-label="Buscar arquivo">
+          <select id="arq-status" aria-label="Filtrar por situação"><option value="">Todas as situações</option></select></div>
+        <div class="grupo-btn"><button class="btn btn-mini" id="exp-registros">CSV dos registros processados</button></div></div>
+      <div id="tab-arq"></div>
+    </div>
+    <div data-painel="ativ" hidden>
+      <div class="barra-tab"><div class="esq"><small>Registro cronológico de requisições, avisos e erros (máx. 400 entradas).</small></div><button class="btn btn-mini" id="btn-limpar-ativ">Limpar</button></div>
+      <ul class="atividade" id="atividade"></ul>
+    </div>
+    <div data-painel="metodo" hidden>
+      <div class="metodo">
+        <section>
+          <h3>Critério de contagem</h3>
+          <p>Conta-se <b>um evento por linha</b> do log da urna com aplicação <code>VOTA</code> e mensagem exatamente igual a <code>O voto do eleitor foi computado</code>, cuja data é a <b>data da eleição do turno selecionado</b>.</p>
+          <ul>
+            <li>Formato verificado: texto <b>ISO-8859-1</b>, separado por TAB, 6 campos: <code>dd/mm/aaaa hh:mm:ss</code> · nível · id da urna · aplicação · mensagem · hash da linha (16 hex).</li>
+            <li>Cada evento é deduplicado por <code>data/hora + hash da linha</code>; cada seção, pela chave <code>pleito|UF|município|zona|seção</code>; cada arquivo, pelo hash publicado no auxiliar.</li>
+            <li><code>Eleitor foi habilitado</code> e <code>Voto confirmado para [cargo]</code> estão disponíveis apenas como contexto. <b>Não equivalem a votos</b>.</li>
+            <li>Linhas fora da data da eleição (testes, carga, outro turno) são descartadas e contadas à parte. <b>O log do 2º turno também contém os eventos do 1º turno.</b></li>
+          </ul>
+        </section>
+        <section>
+          <h3>Validação com dados reais (27/10/2026)</h3>
+          <p>Porto Walter/AC (34 seções), coleta integral e comparação com o comparecimento oficial do arquivo de resultados:</p>
+          <table><thead><tr><th>Turno</th><th class="num">Eventos "computado"</th><th class="num">Comparecimento TSE</th><th class="num">"Habilitado"</th></tr></thead>
+            <tbody><tr><td>1º (04/10)</td><td class="num">6.520</td><td class="num">6.520 ✓</td><td class="num">6.521</td></tr>
+            <tr><td>2º (25/10)</td><td class="num">4.792</td><td class="num">4.792 ✓</td><td class="num">4.792</td></tr></tbody></table>
+          <p class="dica">No 1º turno houve 1 eleitor habilitado a mais que votos computados, por isso "habilitado" não serve como critério. Use o botão <b>Validação rápida</b> para reproduzir esse teste.</p>
+        </section>
+        <section>
+          <h3>Horário e normalização</h3>
+          <ul>
+            <li>Usa-se o <b>horário local gravado pela urna</b>, sem nenhuma conversão. A hora é truncada: 08:59:59 entra em <b>08h</b>.</li>
+            <li>No Acre, os votos aparecem das 06h às 15h locais, o que corresponde às 08h–17h de Brasília. Logo, o agregado nacional <b>mistura fusos</b>: AC −5; AM −4 (oeste −5); MT, MS, RO e RR −4; Fernando de Noronha −2; demais −3.</li>
+            <li>Seções do Exterior usam o relógio local da urna e ficam fora do total por padrão.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Fontes e endpoints utilizados</h3>
+          <ul class="mono" style="font-size:.74rem;word-break:break-all">
+            <li>/oficial/comum/config/ele-c.json: pleitos (3220 = 1º turno, 3221 = 2º turno)</li>
+            <li>/oficial/ele2026/arquivo-urna/{pleito}/config/{uf}/{uf}-p00{pleito}-cs.json: seções</li>
+            <li>…/arquivo-urna/{pleito}/dados/{uf}/{mun}/{zona}/{seção}/p00{pleito}-{uf}-m{mun}-z{zona}-s{seção}-aux.json: hashes e arquivos</li>
+            <li>…/{seção}/{hash}/o0{pleito}{uf}{mun}{zona}{seção}-log.jez: log (ZIP/Deflate com <code>logd.dat</code>)</li>
+            <li>/oficial/ele2026/{eleição}/dados/{uf|br}/{abr}-c0001-e00{eleição}-u.json: lidos <b>somente</b> os campos de seções (<code>s.ts</code>) e de comparecimento (<code>e.c</code>), usados como denominador e para conferência</li>
+          </ul>
+        </section>
+        <section>
+          <h3>O que funciona direto no navegador</h3>
+          <ul>
+            <li>✔ Consulta aos arquivos oficiais: o servidor envia cabeçalho CORS, inclusive para páginas abertas por <code>file://</code>.</li>
+            <li>✔ Descompactação dos <code>.jez</code> de 2026 (ZIP/Deflate) via <code>DecompressionStream</code>.</li>
+            <li>✔ Coleta incremental com pausa e retomada, novas tentativas limitadas e persistência em IndexedDB.</li>
+            <li>✔ Importação de <code>.jez</code>, <code>.zip</code> e <code>logd.dat</code>.</li>
+            <li>✖ Arquivos 7z/LZMA (2022) precisam ser descompactados antes.</li>
+            <li>⚠ Brasil inteiro: são cerca de 497 mil seções com aproximadamente 100 KB cada, ou seja, <b>~50 GB</b> de download e várias horas de coleta. É viável, mas pesado. Prefira amostras ou recortes por UF ou município.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Limitações e privacidade</h3>
+          <ul>
+            <li>Cobertura = logs válidos ÷ seções com urna própria, segundo o TSE (<code>s.ts</code>). Seções agregadas votam na urna da seção principal.</li>
+            <li>Votos em cédula ou em urnas sem log publicado não aparecem nos eventos.</li>
+            <li>Resultados parciais nunca são extrapolados.</li>
+            <li>Os horários não são associados a candidatos nem a eleitores. Os números de título e CPF que aparecem no texto bruto são mascarados (••••).</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Autoteste do parser <small>(linhas de teste isoladas, fora dos totais)</small></h3>
+          <ol class="autoteste" id="autoteste"></ol>
+        </section>
+      </div>
+    </div>
+  </section>
 
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBbXqoMNgpi3FLoibU7YgWyZX9i0E835wc",
-            authDomain: "sharescreen-p2p.firebaseapp.com",
-            databaseURL: "https://sharescreen-p2p-default-rtdb.firebaseio.com",
-            projectId: "sharescreen-p2p",
-            storageBucket: "sharescreen-p2p.firebasestorage.app",
-            messagingSenderId: "294489009607",
-            appId: "1:294489009607:web:32e26075610baec1a97de2",
-            measurementId: "G-PPZ0F5PLBY"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+  <footer>
+    Painel independente de análise. Os dados vêm dos arquivos oficiais publicados pelo Tribunal Superior Eleitoral.
+    Nenhum número exibido é estimado ou simulado. Quando a cobertura é menor que 100%, os resultados são parciais.<br>
+    Documentação oficial: <a href="https://www.tse.jus.br/eleicoes/eleicoes-2026-content/arquivos/log-do-ecossistema" target="_blank" rel="noopener">Log do ecossistema — Eleições 2026</a> ·
+    <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener">Portal de Dados Abertos</a>
+  </footer>
+</main>
 
-        let peer = null;
-        let myId = null;
-        let myNickname = '';
-        let isHost = false;
-        let roomPassword = '';
-        let hostId = null;
-        const dataConnections = {}; 
-        const mediaCalls = {}; 
-        let participants = [];
-        let localStream = null;
-        let joinTimeout = null;
-        const peerLastSeen = {};
-        let heartbeatInterval = null;
-        let currentRoomName = '';
+<!-- Modal de auditoria de um arquivo de log -->
+<dialog id="modal" aria-labelledby="modal-tit">
+  <div class="modal-cab"><h2 id="modal-tit">Detalhes do log</h2><button class="fechar" id="modal-fechar" aria-label="Fechar">×</button></div>
+  <div class="modal-corpo" id="modal-corpo"></div>
+</dialog>
+<div class="tooltip" id="tooltip" role="tooltip"></div>
 
-        function switchLobbyTab(tab) {
-            document.querySelectorAll('.lobby-container .tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.lobby-container .tab-content').forEach(c => c.classList.remove('active'));
-            if(tab === 'create') {
-                document.querySelectorAll('.lobby-container .tab')[0].classList.add('active');
-                document.getElementById('tab-create').classList.add('active');
-            } else {
-                document.querySelectorAll('.lobby-container .tab')[1].classList.add('active');
-                document.getElementById('tab-join').classList.add('active');
-            }
+<script>
+'use strict';
+/* =====================================================================
+   1. CONSTANTES OFICIAIS (verificadas em 27/10/2026 nos arquivos do TSE)
+   São revalidadas em tempo de execução pelo botão "Testar conexão".
+   ===================================================================== */
+const TSE = {
+  BASE: 'https://resultados.tse.jus.br/oficial',
+  CICLO: 'ele2026',
+  TURNOS: {
+    1: { pleito: '3220', eleicao: '6257', data: '04/10/2026', nome: '1º turno' },
+    2: { pleito: '3221', eleicao: '6258', data: '25/10/2026', nome: '2º turno' }
+  }
+};
+const URL_ELE_C = `${TSE.BASE}/comum/config/ele-c.json`;
+
+/* Unidades da Federação (sigla, nome, fuso local da urna em relação a UTC) */
+const UFS = [
+  ['ac','Acre','UTC−5'],['al','Alagoas','UTC−3'],['am','Amazonas','UTC−4 (oeste −5)'],['ap','Amapá','UTC−3'],['ba','Bahia','UTC−3'],
+  ['ce','Ceará','UTC−3'],['df','Distrito Federal','UTC−3'],['es','Espírito Santo','UTC−3'],['go','Goiás','UTC−3'],['ma','Maranhão','UTC−3'],
+  ['mg','Minas Gerais','UTC−3'],['ms','Mato Grosso do Sul','UTC−4'],['mt','Mato Grosso','UTC−4'],['pa','Pará','UTC−3'],['pb','Paraíba','UTC−3'],
+  ['pe','Pernambuco','UTC−3 (Noronha −2)'],['pi','Piauí','UTC−3'],['pr','Paraná','UTC−3'],['rj','Rio de Janeiro','UTC−3'],['rn','Rio Grande do Norte','UTC−3'],
+  ['ro','Rondônia','UTC−4'],['rr','Roraima','UTC−4'],['rs','Rio Grande do Sul','UTC−3'],['sc','Santa Catarina','UTC−3'],['se','Sergipe','UTC−3'],
+  ['sp','São Paulo','UTC−3'],['to','Tocantins','UTC−3'],['zz','Exterior','fuso local']
+];
+const UF_NOME = Object.fromEntries(UFS.map(u => [u[0], u[1]]));
+const UF_FUSO = Object.fromEntries(UFS.map(u => [u[0], u[2]]));
+
+/* Catálogo de eventos reconhecidos (mensagens verificadas em logs reais de 2026).
+   Apenas "computado" representa voto; os demais servem de contexto. */
+const CATALOGO = [
+  { id: 'computado', rotulo: 'Voto computado', principal: true,
+    desc: 'Mensagem "O voto do eleitor foi computado" (aplicação VOTA). Critério principal, validado contra o comparecimento oficial.',
+    teste: (app, msg) => app === 'VOTA' && msg === 'O voto do eleitor foi computado' },
+  { id: 'habilitado', rotulo: 'Eleitor habilitado',
+    desc: '"Eleitor foi habilitado": liberação da urna pelo mesário. NÃO equivale a voto (há habilitações sem voto computado).',
+    teste: (app, msg) => app === 'VOTA' && msg === 'Eleitor foi habilitado' },
+  { id: 'confirmado', rotulo: 'Confirmação por cargo',
+    desc: '"Voto confirmado para [cargo]": um registro por cargo, vários por eleitor. NÃO equivale a voto.',
+    teste: (app, msg) => app === 'VOTA' && msg.startsWith('Voto confirmado para [') }
+];
+const TIPOS = CATALOGO.map(c => c.id);
+const TIPO_ROT = Object.fromEntries(CATALOGO.map(c => [c.id, c.rotulo]));
+
+/* Situações possíveis de cada arquivo/seção */
+const STATUS = {
+  'ok':             ['Válido', 'ok'],
+  'ok-alerta':      ['Válido c/ alertas', 'alerta'],
+  'sem-log':        ['Sem log publicado', 'neutro'],
+  'nao-encontrado': ['Não encontrado (404)', 'neutro'],
+  'invalido':       ['Inválido', 'erro'],
+  'erro':           ['Erro de rede/HTTP', 'erro']
+};
+const VALIDOS = new Set(['ok', 'ok-alerta']);
+const CORES = ['#34d399','#60a5fa','#fbbf24','#f472b6','#a78bfa','#f87171','#22d3ee','#a3e635'];
+
+/* =====================================================================
+   2. ESTADO GLOBAL
+   ===================================================================== */
+const S = {
+  turno: 1,
+  registros: new Map(),     // chave -> registro processado (todos os turnos)
+  cs: new Map(),            // "turno|uf" -> relação oficial de seções
+  resumos: new Map(),       // url -> Promise({secoes, comparecimento})
+  eventosCache: new Map(),  // chave -> eventos (para auditoria)
+  filtros: {},
+  suporte: { descompressao: false, idb: false },
+  geracaoTSE: null,
+  coleta: { estado: 'ocioso', fila: [], pos: 0, retorno: [], pausado: false, abort: null, inicio: 0, total: 0, cont: novoContador(), ativa: false },
+  atividade: [],
+  ui: { modo: 'brasil', tipoGraf: 'barras', escala: 'abs', recortar: true, aba: 'hora', tab: {}, hover: null, grafico: null, den: null, denChave: null }
+};
+function novoContador() { return { processadas: 0, ok: 0, alerta: 0, semLog: 0, naoEnc: 0, invalidos: 0, erros: 0, pulados: 0, bytes: 0 }; }
+
+/* =====================================================================
+   3. UTILITÁRIOS
+   ===================================================================== */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const NF = new Intl.NumberFormat('pt-BR');
+const NFC = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 });
+const fmt = n => (n == null || !isFinite(n)) ? '—' : NF.format(n);
+const fmtPct = (n, d = 2) => (n == null || !isFinite(n)) ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d }) + '%';
+const pad = (n, l = 2) => String(n).padStart(l, '0');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const zeros = () => new Array(24).fill(0);
+const soma = a => a.reduce((x, y) => x + y, 0);
+const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const fmtDH = d => d ? new Date(d).toLocaleString('pt-BR') : '—';
+const hojeISO = () => new Date().toISOString().slice(0, 10);
+const chave = (pleito, s) => `${pleito}|${s.uf}|${s.mun}|${s.zona}|${s.secao}`;
+const P = () => TSE.TURNOS[S.turno];
+/* Mascara sequências de 11–12 dígitos (CPF / título de eleitor de mesários) no texto bruto */
+const mascarar = s => String(s).replace(/\b\d{11,12}\b/g, m => '•'.repeat(m.length));
+function fmtBytes(b) { if (!b) return '0 B'; const u = ['B','KB','MB','GB','TB']; const i = Math.min(4, Math.floor(Math.log(b) / Math.log(1024))); return (b / 1024 ** i).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' ' + u[i]; }
+function fmtDur(s) { if (!isFinite(s) || s < 0) return '—'; s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}h${pad(m)}min` : m ? `${m}min${pad(x)}s` : `${x}s`; }
+/* Converte "dd/mm/aaaa" + "hh:mm:ss" em Date (usado só para ordenar datas de geração do TSE) */
+function dataBR(d, h = '00:00:00') { const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d || ''); if (!m) return null; return new Date(`${m[3]}-${m[2]}-${m[1]}T${h || '00:00:00'}`); }
+function notarGeracao(dg, hg) { const d = dataBR(dg, hg); if (d && (!S.geracaoTSE || d > S.geracaoTSE)) { S.geracaoTSE = d; $('#h-geracao').textContent = `${dg} ${hg}`; } }
+
+/* Registro de atividade (auditoria das operações) */
+function registrar(nivel, msg) {
+  const e = { t: new Date(), nivel, msg };
+  S.atividade.unshift(e); if (S.atividade.length > 400) S.atividade.pop();
+  if (S.ui.aba === 'ativ') renderAtividade();
+  if (nivel === 'erro') console.warn('[painel]', msg);
+}
+
+/* =====================================================================
+   4. REDE — fetch com tentativas limitadas e classificação de erros
+   ===================================================================== */
+class ErroHttp extends Error {
+  constructor(status, url, msg) { super(msg || `HTTP ${status}`); this.status = status; this.url = url;
+    this.temporario = status === 0 || status === 408 || status === 429 || status >= 500; }
+}
+class ErroFormato extends Error {}
+const backoff = i => 900 * 2 ** i + Math.random() * 500;
+
+async function buscar(url, tipo = 'json', { tentativas = 3, sinal } = {}) {
+  let ultimo;
+  for (let i = 0; i < tentativas; i++) {
+    if (sinal?.aborted) throw new DOMException('Abortado', 'AbortError');
+    try {
+      const res = await fetch(url, { signal: sinal, mode: 'cors', credentials: 'omit' });
+      if (!res.ok) {
+        const e = new ErroHttp(res.status, url, `HTTP ${res.status}${res.statusText ? ' ' + res.statusText : ''}`);
+        if (!e.temporario) throw e;
+        ultimo = e;
+        if (i < tentativas - 1) { const ra = parseInt(res.headers.get('Retry-After'), 10); await sleep(isFinite(ra) ? ra * 1000 : backoff(i)); }
+        continue;
+      }
+      if (tipo === 'json') {
+        const txt = await res.text(); S.coleta.cont.bytes += txt.length;
+        try { return JSON.parse(txt); } catch { throw new ErroHttp(-1, url, 'Resposta não é um JSON válido'); }
+      }
+      const buf = new Uint8Array(await res.arrayBuffer()); S.coleta.cont.bytes += buf.length;
+      return buf;
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      if (e instanceof ErroHttp && !e.temporario) throw e;
+      ultimo = e instanceof ErroHttp ? e : new ErroHttp(0, url, 'Falha de rede ou bloqueio de CORS (' + e.message + ')');
+      if (i < tentativas - 1) await sleep(backoff(i));
+    }
+  }
+  throw ultimo;
+}
+function descreverErro(e) {
+  if (!e) return 'erro desconhecido';
+  if (e instanceof ErroHttp) {
+    if (e.status === 404) return 'Arquivo inexistente no servidor (HTTP 404)';
+    if (e.status === 403) return 'Acesso negado pelo servidor (HTTP 403)';
+    if (e.status === 0) return 'Falha de rede ou bloqueio de CORS. Verifique a conexão.';
+    if (e.status === -1) return e.message;
+    return `Resposta HTTP inválida: ${e.message}`;
+  }
+  return e.message || String(e);
+}
+
+/* ---------- Construção dos endereços oficiais ---------- */
+const p6 = c => pad(c, 6);
+function urlCS(t, uf) { const p = TSE.TURNOS[t].pleito; return `${TSE.BASE}/${TSE.CICLO}/arquivo-urna/${p}/config/${uf}/${uf}-p${p6(p)}-cs.json`; }
+function dirSecao(t, s) { return `${TSE.BASE}/${TSE.CICLO}/arquivo-urna/${TSE.TURNOS[t].pleito}/dados/${s.uf}/${s.mun}/${s.zona}/${s.secao}`; }
+function urlAux(t, s) { return `${dirSecao(t, s)}/p${p6(TSE.TURNOS[t].pleito)}-${s.uf}-m${s.mun}-z${s.zona}-s${s.secao}-aux.json`; }
+function urlArquivo(t, s, hash, nome) { return `${dirSecao(t, s)}/${hash}/${nome}`; }
+function urlResumo(t, uf, mun) { const e = TSE.TURNOS[t].eleicao; const dir = uf || 'br'; const abr = uf ? uf + (mun || '') : 'br'; return `${TSE.BASE}/${TSE.CICLO}/${e}/dados/${dir}/${abr}-c0001-e${p6(e)}-u.json`; }
+
+/* =====================================================================
+   5. ARQUIVOS AUXILIARES DO TSE
+   ===================================================================== */
+/* Relação oficial de municípios/zonas/seções de uma UF (arquivo "cs") */
+async function carregarCS(uf, t = S.turno) {
+  const k = `${t}|${uf}`;
+  if (S.cs.has(k)) return S.cs.get(k);
+  const pr = (async () => {
+    const j = await buscar(urlCS(t, uf), 'json');
+    if (!j || !Array.isArray(j.abr)) throw new ErroFormato('Estrutura inesperada no arquivo de seções (cs)');
+    notarGeracao(j.dg, j.hg);
+    const secoes = [], municipios = new Map();
+    for (const a of j.abr) for (const m of (a.mu || [])) {
+      const mi = { cd: m.cd, nome: m.nm, zonas: new Map(), urnas: 0 };
+      municipios.set(m.cd, mi);
+      for (const z of (m.zon || [])) {
+        const zs = [];
+        for (const s of (z.sec || [])) {
+          const reg = { uf, mun: m.cd, munNome: m.nm, zona: z.cd, secao: s.ns, principal: s.nsp || null, agregadas: s.nsa || [] };
+          secoes.push(reg); zs.push(reg);
+          if (!s.nsp) mi.urnas++;
         }
+        mi.zonas.set(z.cd, zs);
+      }
+    }
+    const info = { uf, dg: j.dg, hg: j.hg, secoes, municipios, urnas: secoes.filter(s => !s.principal).length, agregadas: secoes.filter(s => s.principal).length };
+    registrar('info', `Relação de seções ${uf.toUpperCase()} (${TSE.TURNOS[t].nome}): ${fmt(info.urnas)} seções com urna própria, ${fmt(info.agregadas)} agregadas. Gerado em ${j.dg} ${j.hg}.`);
+    return info;
+  })();
+  S.cs.set(k, pr);
+  pr.catch(() => S.cs.delete(k));
+  return pr;
+}
+/* Denominadores oficiais: lê apenas a quantidade de seções e o comparecimento */
+function carregarResumo(uf, mun, t = S.turno) {
+  const url = urlResumo(t, uf, mun);
+  if (S.resumos.has(url)) return S.resumos.get(url);
+  const pr = buscar(url, 'json', { tentativas: 2 }).then(j => {
+    const r = { secoes: parseInt(j?.s?.ts, 10), comparecimento: parseInt(j?.e?.c, 10), dg: j?.dg, hg: j?.hg, url };
+    if (!isFinite(r.secoes)) throw new ErroFormato('Resumo oficial sem quantidade de seções');
+    return r;
+  });
+  S.resumos.set(url, pr); pr.catch(() => S.resumos.delete(url));
+  return pr;
+}
+/* Escolhe, no auxiliar, o conjunto de arquivos totalizado mais recente */
+function escolherHash(aux) {
+  const hs = (aux?.hashes || []).filter(h => h && h.hash);
+  if (!hs.length) return null;
+  const ord = (a, b) => (dataBR(a.dr, a.hr) || 0) - (dataBR(b.dr, b.hr) || 0);
+  const tot = hs.filter(h => /totalizad/i.test(h.st || '')).sort(ord);
+  if (tot.length) return { h: tot[tot.length - 1], totalizado: true };
+  return { h: [...hs].sort(ord).pop(), totalizado: false };
+}
 
-        function switchSidebarTab(tab) {
-            document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.sidebar-content').forEach(c => c.classList.remove('active'));
-            if(tab === 'participants') {
-                document.querySelectorAll('.sidebar-tab')[0].classList.add('active');
-                document.getElementById('side-participants').classList.add('active');
-            } else {
-                document.querySelectorAll('.sidebar-tab')[1].classList.add('active');
-                document.getElementById('side-chat').classList.add('active');
-                const chatBox = document.getElementById('chat-messages');
-                chatBox.parentElement.scrollTop = chatBox.parentElement.scrollHeight;
-            }
-        }
+/* =====================================================================
+   6. DESCOMPACTAÇÃO NATIVA (ZIP/Deflate, GZIP) — sem bibliotecas
+   ===================================================================== */
+const DEC = new TextDecoder('iso-8859-1'); // os navegadores mapeiam para windows-1252 (superconjunto)
+function detectarFormato(u8) {
+  const c = sig => sig.every((b, i) => u8[i] === b);
+  if (c([0x50, 0x4b, 0x03, 0x04]) || c([0x50, 0x4b, 0x05, 0x06])) return 'zip';
+  if (c([0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c])) return '7z';
+  if (c([0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00])) return 'xz';
+  if (c([0x1f, 0x8b])) return 'gzip';
+  const ini = String.fromCharCode(...u8.subarray(0, 10));
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(ini)) return 'texto';
+  return 'desconhecido';
+}
+async function inflar(u8, formato) {
+  const fluxo = new Blob([u8]).stream().pipeThrough(new DecompressionStream(formato));
+  return new Uint8Array(await new Response(fluxo).arrayBuffer());
+}
+/* Leitor mínimo de ZIP via diretório central (suporta métodos 0 = armazenado e 8 = deflate) */
+async function lerZip(u8) {
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  let eocd = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new ErroFormato('ZIP inválido: diretório central ausente (arquivo truncado?)');
+  const total = dv.getUint16(eocd + 10, true), cdOff = dv.getUint32(eocd + 16, true);
+  if (cdOff === 0xffffffff || total === 0xffff) throw new ErroFormato('ZIP64 não suportado');
+  const entradas = []; let p = cdOff;
+  for (let n = 0; n < total; n++) {
+    if (p + 46 > u8.length || dv.getUint32(p, true) !== 0x02014b50) throw new ErroFormato('ZIP inválido: diretório central corrompido');
+    const flags = dv.getUint16(p + 8, true), metodo = dv.getUint16(p + 10, true), comp = dv.getUint32(p + 20, true), tam = dv.getUint32(p + 24, true);
+    const nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+    const nome = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nl));
+    p += 46 + nl + el + cl;
+    if (!nome.endsWith('/')) entradas.push({ nome, flags, metodo, comp, tam, off });
+  }
+  const saida = [];
+  for (const e of entradas) {
+    if (e.flags & 1) throw new ErroFormato(`Entrada "${e.nome}" criptografada (não suportado)`);
+    if (dv.getUint32(e.off, true) !== 0x04034b50) throw new ErroFormato(`Cabeçalho local inválido em "${e.nome}"`);
+    const ini = e.off + 30 + dv.getUint16(e.off + 26, true) + dv.getUint16(e.off + 28, true);
+    if (ini + e.comp > u8.length) throw new ErroFormato(`Arquivo truncado em "${e.nome}"`);
+    const bruto = u8.subarray(ini, ini + e.comp);
+    let dados;
+    if (e.metodo === 0) dados = bruto.slice();
+    else if (e.metodo === 8) dados = await inflar(bruto, 'deflate-raw');
+    else throw new ErroFormato(`Método de compressão ${e.metodo} não suportado em "${e.nome}"`);
+    if (e.tam && dados.length !== e.tam) throw new ErroFormato(`Tamanho descompactado divergente em "${e.nome}"`);
+    saida.push({ nome: e.nome, dados });
+  }
+  return saida;
+}
+/* Extrai os textos de log de um .jez (ZIP) ou de um texto já descompactado */
+async function extrairLogs(u8, nomeOrigem) {
+  const f = detectarFormato(u8);
+  if (f === 'texto') return [{ nome: nomeOrigem, texto: DEC.decode(u8) }];
+  if (f === 'gzip') return extrairLogs(await inflar(u8, 'gzip'), nomeOrigem.replace(/\.gz$/i, ''));
+  if (f === '7z' || f === 'xz') throw new ErroFormato(`Formato ${f.toUpperCase()}/LZMA: o navegador não descompacta nativamente. Descompacte com 7-Zip e importe o logd.dat.`);
+  if (f !== 'zip') throw new ErroFormato('Formato não reconhecido (esperado ZIP/.jez ou texto do log)');
+  const logs = (await lerZip(u8)).filter(e => detectarFormato(e.dados) === 'texto').map(e => ({ nome: e.nome, texto: DEC.decode(e.dados) }));
+  if (!logs.length) throw new ErroFormato('O pacote não contém log de urna em texto reconhecível');
+  return logs;
+}
 
-        function showToast(message, icon = 'fa-info-circle') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = `<i class="fa-solid ${icon}" style="color: var(--primary-color)"></i> <span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.animation = 'fadeOut 0.3s ease-out forwards';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
+/* =====================================================================
+   7. PARSER DO LOG DA URNA
+   ===================================================================== */
+const RE_DT = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/;
+const RE_HASH = /^[0-9A-F]{16}$/i;
+/**
+ * Analisa um ou mais textos de log.
+ * - extrai data/hora, nível, id da urna, aplicação, mensagem e hash de cada linha;
+ * - reconhece os eventos do CATALOGO e conta por hora (horário local da urna);
+ * - descarta eventos fora da data da eleição (contados à parte);
+ * - deduplica por data/hora + hash da linha;
+ * - registra linhas com formato inválido.
+ */
+function analisarLogs(logs, dataEleicao, coletarEventos = false) {
+  const r = { linhas: 0, validas: 0, invalidas: 0, amostrasInvalidas: [], foraCatalogo: 0, duplicadas: 0,
+    urnas: new Set(), h: {}, fora: {}, primeiro: null, ultimo: null, encerramento: false,
+    eventos: coletarEventos ? [] : null, entradas: logs.map(l => l.nome), datas: {} };
+  for (const t of TIPOS) { r.h[t] = zeros(); r.fora[t] = 0; }
+  const vistos = new Set();
+  const invalida = (log, i, bruto, motivo) => { r.invalidas++; if (r.amostrasInvalidas.length < 20) r.amostrasInvalidas.push({ arquivo: log.nome, n: i + 1, motivo, texto: mascarar(bruto.slice(0, 300)) }); };
+  for (const log of logs) {
+    const linhas = log.texto.split(/\r?\n/);
+    for (let i = 0; i < linhas.length; i++) {
+      const bruto = linhas[i];
+      if (!bruto.trim()) continue;
+      r.linhas++;
+      const c = bruto.split('\t');
+      if (c.length < 6) { invalida(log, i, bruto, `esperados 6 campos, encontrados ${c.length}`); continue; }
+      const m = RE_DT.exec(c[0]);
+      const hashLinha = c[c.length - 1].trim();
+      if (!m) { invalida(log, i, bruto, 'data/hora inválida'); continue; }
+      if (+m[1] < 1 || +m[1] > 31 || +m[2] < 1 || +m[2] > 12 || +m[4] > 23 || +m[5] > 59 || +m[6] > 59) { invalida(log, i, bruto, 'data/hora fora do intervalo'); continue; }
+      if (!RE_HASH.test(hashLinha)) { invalida(log, i, bruto, 'hash da linha ausente/inválido'); continue; }
+      r.validas++;
+      const data = c[0].slice(0, 10), hora = +m[4];
+      const nivel = c[1], urna = c[2], app = c[3], msg = c.slice(4, -1).join('\t');
+      const naData = data === dataEleicao;
+      r.datas[data] = (r.datas[data] || 0) + 1;
+      if (naData) {
+        r.urnas.add(urna);
+        if (app === 'VOTA' && /^In[ií]cio do Encerramento$/.test(msg)) r.encerramento = true;
+      }
+      let tipo = null;
+      for (const cat of CATALOGO) if (cat.teste(app, msg)) { tipo = cat.id; break; }
+      if (!tipo) { r.foraCatalogo++; continue; }
+      const k = c[0] + '|' + hashLinha;
+      if (vistos.has(k)) { r.duplicadas++; continue; }
+      vistos.add(k);
+      if (naData) {
+        r.h[tipo][hora]++;
+        if (tipo === 'computado') { const hm = c[0].slice(11); if (!r.primeiro || hm < r.primeiro) r.primeiro = hm; if (!r.ultimo || hm > r.ultimo) r.ultimo = hm; }
+      } else r.fora[tipo]++;
+      if (r.eventos) r.eventos.push({ dt: c[0], hora, nivel, urna, app, msg, hashLinha, tipo, naData, arquivo: log.nome, linha: i + 1, bruto: mascarar(bruto) });
+    }
+  }
+  return r;
+}
+/* Converte o resultado do parser em registro persistível, com validação e alertas */
+function montarRegistro(base, r) {
+  const total = soma(r.h.computado);
+  const alertas = [];
+  if (total === 0) alertas.push('Nenhum evento de voto computado na data da eleição');
+  if (!r.encerramento) alertas.push('Encerramento da votação não encontrado na data: o log pode estar incompleto ou ser de urna de contingência');
+  if (r.invalidas > 0) alertas.push(`${r.invalidas} linha(s) com formato inválido`);
+  if (r.urnas.size > 1) alertas.push(`${r.urnas.size} urnas distintas na data (possível substituição de urna)`);
+  if (r.duplicadas > 0) alertas.push(`${r.duplicadas} evento(s) duplicado(s) descartado(s)`);
+  if (base.naoTotalizado) alertas.push('Hash escolhido não está marcado como "Totalizado" no auxiliar');
+  return { ...base, status: alertas.length ? 'ok-alerta' : 'ok', alertas, h: r.h, fora: r.fora,
+    linhas: r.linhas, validas: r.validas, invalidas: r.invalidas, foraCatalogo: r.foraCatalogo, duplicadas: r.duplicadas,
+    urnas: [...r.urnas], primeiro: r.primeiro, ultimo: r.ultimo, entradas: r.entradas,
+    amostrasInvalidas: r.amostrasInvalidas.slice(0, 5), datas: r.datas, processadoEm: new Date().toISOString() };
+}
 
-        function showRoomUI() {
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('room').style.display = 'flex';
-            startHeartbeat();
-        }
+/* =====================================================================
+   8. PERSISTÊNCIA (IndexedDB) — evita baixar novamente o que já foi processado
+   ===================================================================== */
+const DB = {
+  db: null, pend: new Map(), timer: null,
+  abrir() {
+    return new Promise(ok => {
+      try {
+        const rq = indexedDB.open('painel-votos-hora-2026', 1);
+        rq.onupgradeneeded = () => rq.result.createObjectStore('registros', { keyPath: 'key' });
+        rq.onsuccess = () => { this.db = rq.result; S.suporte.idb = true; ok(true); };
+        rq.onerror = () => ok(false);
+      } catch { ok(false); }
+    });
+  },
+  salvar(reg) { if (!this.db) return; this.pend.set(reg.key, reg); if (!this.timer) this.timer = setTimeout(() => this.gravarPendentes(), 1200); },
+  gravarPendentes() {
+    this.timer = null; if (!this.db || !this.pend.size) return;
+    const regs = [...this.pend.values()]; this.pend.clear();
+    try { const tx = this.db.transaction('registros', 'readwrite'); const st = tx.objectStore('registros'); regs.forEach(r => st.put(r)); tx.onerror = () => registrar('erro', 'Falha ao gravar no IndexedDB: ' + tx.error); }
+    catch (e) { registrar('erro', 'IndexedDB indisponível: ' + e.message); }
+  },
+  carregarTodos() {
+    return new Promise(ok => {
+      if (!this.db) return ok([]);
+      const rq = this.db.transaction('registros').objectStore('registros').getAll();
+      rq.onsuccess = () => ok(rq.result || []); rq.onerror = () => ok([]);
+    });
+  },
+  apagar(chaves) {
+    if (!this.db) return;
+    const tx = this.db.transaction('registros', 'readwrite'); const st = tx.objectStore('registros');
+    chaves.forEach(k => st.delete(k));
+  }
+};
+function gravar(reg) {
+  S.registros.set(reg.key, reg);
+  DB.salvar(reg);
+  const c = S.coleta.cont; c.processadas++;
+  ({ 'ok': () => c.ok++, 'ok-alerta': () => c.alerta++, 'sem-log': () => c.semLog++, 'nao-encontrado': () => c.naoEnc++, 'invalido': () => c.invalidos++, 'erro': () => c.erros++ })[reg.status]?.();
+  if (reg.status === 'erro' || reg.status === 'invalido') registrar('erro', `${rotSecao(reg)}: ${reg.erro}`);
+  agendarRender();
+}
+const rotSecao = r => `${(r.uf || '??').toUpperCase()} ${r.munNome || r.mun} · Z${r.zona} · S${r.secao}`;
 
-        async function copyRoomId() {
-            const id = document.getElementById('display-room-id').innerText;
-            try {
-                const link = window.location.origin + window.location.pathname + '?room=' + id;
-                await navigator.clipboard.writeText(link);
-                showToast('Link Convite copiado!', 'fa-check');
-            } catch(e) { console.error('Falha ao copiar', e); }
-        }
+/* =====================================================================
+   9. MOTOR DE COLETA INCREMENTAL (fila + concorrência + pausa/retomada)
+   ===================================================================== */
+function definirEstado(e) {
+  S.coleta.estado = e;
+  const mapa = { ocioso: ['Ocioso', ''], testando: ['Testando conexão…', 'info'], preparando: ['Preparando fila…', 'info'], coletando: ['Coletando', 'ativo'],
+    pausando: ['Pausando…', 'alerta'], pausado: ['Pausado', 'alerta'], concluido: ['Coleta concluída', 'ok'], erro: ['Falha na coleta', 'erro'], importando: ['Importando…', 'info'] };
+  const [txt, cls] = mapa[e] || [e, ''];
+  $('#h-status').className = 'pill ' + cls; $('#h-status-txt').textContent = txt;
+  const ativo = ['coletando', 'preparando', 'pausando', 'testando'].includes(e);
+  $('#btn-iniciar').disabled = ativo; $('#btn-validacao').disabled = ativo; $('#btn-testar').disabled = ativo; $('#btn-limpar').disabled = ativo;
+  $('#btn-pausar').disabled = e !== 'coletando';
+  $('#btn-iniciar span').textContent = (e === 'pausado' && filaRestante() > 0) ? 'Retomar coleta' : 'Iniciar coleta';
+}
+const filaRestante = () => S.coleta.retorno.length + Math.max(0, S.coleta.fila.length - S.coleta.pos);
 
-        function initPeer() {
-            return new Promise((resolve, reject) => {
-                const options = { debug: 1, config: {'iceServers': [{ url: 'stun:stun.l.google.com:19302' }]} };
-                peer = new Peer(options);
-                peer.on('open', id => { myId = id; resolve(id); });
-                peer.on('disconnected', () => {
-                    console.log('Desconectado do servidor de sinalização. Reconectando...');
-                    if (!peer.destroyed) {
-                        peer.reconnect();
-                    }
-                });
-                peer.on('error', async err => {
-                    if (!peer || peer.destroyed) return;
-                    console.error('PeerJS Error:', err);
-                    if (err.type === 'peer-unavailable') {
-                        if (isJoining && hostId) {
-                            if (joinTimeout) clearTimeout(joinTimeout);
-                            isJoining = false;
-                            showToast('Host offline. Assumindo a sala...', 'fa-magic');
-                            const targetPwd = document.getElementById('join-password').value;
-                            if(document.getElementById('create-room-name')) document.getElementById('create-room-name').value = currentRoomName;
-                            resetUI();
-                            await createRoom(targetPwd);
-                        } else if (!isJoining && document.getElementById('room').style.display === 'flex') {
-                            console.warn('Um peer ficou indisponível:', err);
-                        } else {
-                            alert('Sala não encontrada. Verifique o Nome.');
-                            resetUI();
-                            const btn = document.getElementById('btn-join');
-                            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Entrar na Sala'; }
-                        }
-                    } else {
-                        showToast('Erro de conexão: ' + err.type, 'fa-circle-exclamation');
-                        reject(err);
-                    }
-                });
-                peer.on('connection', handleIncomingConnection);
-                peer.on('call', handleIncomingCall);
-            });
-        }
+/* Monta a fila a partir da relação oficial de seções, respeitando os filtros */
+async function montarFila() {
+  const f = S.filtros, Pt = P();
+  const ufs = f.uf === 'todos' ? UFS.map(u => u[0]).filter(u => u !== 'zz' || f.exterior) : [f.uf];
+  let secoes = [];
+  for (const uf of ufs) {
+    $('#c-atual').textContent = `Carregando relação oficial de seções: ${uf.toUpperCase()}…`;
+    const cs = await carregarCS(uf);
+    for (const s of cs.secoes) secoes.push(s);
+  }
+  if (f.mun) secoes = secoes.filter(s => s.mun === f.mun);
+  if (f.zona) secoes = secoes.filter(s => s.zona === f.zona);
+  if (f.secao) secoes = secoes.filter(s => s.secao === f.secao);
+  const agregadas = secoes.filter(s => s.principal).length;
+  const urnas = secoes.filter(s => !s.principal);
+  const revalidar = $('#c-revalidar').checked;
+  let pend = urnas.filter(s => { const r = S.registros.get(chave(Pt.pleito, s)); return revalidar || !r || r.status === 'erro'; });
+  const jaFeitas = urnas.length - pend.length;
+  const lim = Math.max(0, parseInt($('#c-limite').value, 10) || 0);
+  if ($('#c-ordem').value === 'ale') { for (let i = pend.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pend[i], pend[j]] = [pend[j], pend[i]]; } }
+  if (lim > 0) pend = pend.slice(0, lim);
+  return { fila: pend, urnas: urnas.length, agregadas, jaFeitas };
+}
 
-        function checkRoomActive(targetId) {
-            return new Promise((resolve) => {
-                const tempPeer = new Peer({ config: {'iceServers': [{ url: 'stun:stun.l.google.com:19302' }]} });
-                let resolved = false;
-                const finish = (alive) => {
-                    if (resolved) return;
-                    resolved = true;
-                    tempPeer.destroy();
-                    resolve(alive);
-                };
-                tempPeer.on('open', () => {
-                    const conn = tempPeer.connect(targetId, { reliable: true });
-                    conn.on('open', () => finish(true));
-                    setTimeout(() => finish(false), 3000);
-                });
-                tempPeer.on('error', () => finish(false));
-            });
-        }
+async function iniciarColeta() {
+  if (!S.suporte.descompressao) { alert('Seu navegador não oferece DecompressionStream("deflate-raw"). Use Chrome/Edge 103+, Firefox 113+ ou Safari 16.4+.'); return; }
+  const C = S.coleta;
+  lerFiltros();
+  // Retomada de uma coleta pausada
+  if (C.estado === 'pausado' && filaRestante() > 0 && C.turno === S.turno) {
+    registrar('info', `Coleta retomada: ${fmt(filaRestante())} seções restantes.`);
+  } else {
+    definirEstado('preparando');
+    let m;
+    try { m = await montarFila(); }
+    catch (e) { definirEstado('erro'); $('#c-atual').textContent = 'Falha ao montar a fila: ' + descreverErro(e); registrar('erro', 'Montagem da fila: ' + descreverErro(e)); return; }
+    if (!m.fila.length) { definirEstado('ocioso'); $('#c-atual').textContent = `Nada a coletar: ${fmt(m.jaFeitas)} seções do escopo já foram processadas (${fmt(m.agregadas)} agregadas não têm urna própria).`; agendarRender(true); return; }
+    if (m.fila.length > 2000 && !confirm(`A coleta incluirá ${fmt(m.fila.length)} seções, com cerca de ${fmtBytes(m.fila.length * 1.03e5)} de download (estimativa por média de ~100 KB/log). Pode levar bastante tempo. Continuar?`)) { definirEstado('ocioso'); return; }
+    Object.assign(C, { fila: m.fila, pos: 0, retorno: [], total: m.fila.length, cont: novoContador(), turno: S.turno });
+    registrar('info', `Fila montada: ${fmt(m.fila.length)} seções a processar (${fmt(m.urnas)} no escopo, ${fmt(m.jaFeitas)} já processadas, ${fmt(m.agregadas)} agregadas ignoradas).`);
+  }
+  C.pausado = false; C.abort = new AbortController(); C.inicio = performance.now(); C.bytesIni = C.cont.bytes; C.procIni = C.cont.processadas;
+  definirEstado('coletando');
+  const n = parseInt($('#c-conc').value, 10) || 3;
+  await Promise.all(Array.from({ length: n }, () => trabalhador()));
+  DB.gravarPendentes();
+  if (C.pausado) { definirEstado('pausado'); $('#c-atual').textContent = `Pausado. ${fmt(filaRestante())} seções aguardando.`; registrar('aviso', 'Coleta pausada pelo usuário.'); }
+  else { definirEstado('concluido'); $('#c-atual').textContent = `Concluído: ${fmt(C.cont.processadas)} seções processadas nesta execução.`; registrar('ok', `Coleta concluída. Válidos: ${fmt(C.cont.ok + C.cont.alerta)} · sem log: ${fmt(C.cont.semLog)} · 404: ${fmt(C.cont.naoEnc)} · inválidos: ${fmt(C.cont.invalidos)} · erros: ${fmt(C.cont.erros)} · pulados: ${fmt(C.cont.pulados)}.`); }
+  agendarRender(true);
+}
+function proximaSecao() { const C = S.coleta; if (C.retorno.length) return C.retorno.shift(); if (C.pos < C.fila.length) return C.fila[C.pos++]; return null; }
+async function trabalhador() {
+  const C = S.coleta, intervalo = Math.max(0, parseInt($('#c-intervalo').value, 10) || 0);
+  while (!C.pausado) {
+    const s = proximaSecao(); if (!s) break;
+    $('#c-atual').textContent = `→ ${s.uf.toUpperCase()} ${s.munNome} · zona ${s.zona} · seção ${s.secao}`;
+    try { await processarSecao(s, C.abort.signal); }
+    catch (e) { if (e.name === 'AbortError') { C.retorno.unshift(s); break; } gravar({ ...baseSecao(s), status: 'erro', erro: descreverErro(e) }); }
+    renderProgresso();
+    if (intervalo) await sleep(intervalo);
+  }
+}
+function pausarColeta() { const C = S.coleta; if (C.estado !== 'coletando') return; C.pausado = true; C.abort?.abort(); definirEstado('pausando'); }
+const baseSecao = s => ({ key: chave(P().pleito, s), pleito: P().pleito, turno: S.turno, uf: s.uf, mun: s.mun, munNome: s.munNome, zona: s.zona, secao: s.secao, origem: 'tse', agregadas: s.agregadas || [] });
 
-        async function createRoom(forcePassword = null) {
-            myNickname = document.getElementById('nickname').value.trim() || 'Apresentador';
-            roomPassword = forcePassword !== null ? forcePassword : document.getElementById('host-password').value;
-            currentRoomName = document.getElementById('create-room-name') ? document.getElementById('create-room-name').value.trim() : '';
-            if (!currentRoomName) {
-                currentRoomName = 'sala-' + Math.random().toString(36).substring(2, 6);
-                if(document.getElementById('create-room-name')) document.getElementById('create-room-name').value = currentRoomName;
-            }
-            
-            const btn = document.getElementById('btn-create');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
-            }
-            try {
-                const snapshot = await database.ref('rooms/' + currentRoomName).once('value');
-                if (snapshot.exists() && snapshot.val().hostId) {
-                    const isActive = await checkRoomActive(snapshot.val().hostId);
-                    if (isActive) {
-                        alert("Esta sala já está ativa! Por favor, escolha outro nome ou acesse a aba 'Entrar na Sala'.");
-                        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus"></i> Criar e Entrar'; }
-                        return;
-                    }
-                }
+/* Processa uma seção: auxiliar → escolha do hash → download do log → parser → registro */
+async function processarSecao(s, sinal) {
+  const t = S.turno, Pt = P(), base = baseSecao(s);
+  const ant = S.registros.get(base.key);
+  let aux;
+  try { aux = await buscar(urlAux(t, s), 'json', { sinal }); }
+  catch (e) { if (e.name === 'AbortError') throw e; return gravar({ ...base, status: e.status === 404 ? 'nao-encontrado' : (e.status === -1 ? 'invalido' : 'erro'), erro: 'Auxiliar: ' + descreverErro(e) }); }
+  if (!aux || !Array.isArray(aux.hashes)) return gravar({ ...base, status: 'invalido', erro: 'Auxiliar com estrutura inesperada' });
+  notarGeracao(aux.dg, aux.hg);
+  base.stAux = aux.st || ''; base.multiplosHashes = aux.hashes.length;
+  const escolha = escolherHash(aux);
+  if (!escolha) return gravar({ ...base, status: 'sem-log', erro: `Nenhum arquivo publicado (situação: ${aux.st || '—'})` });
+  const arq = (escolha.h.arq || []).find(a => a.tp === 'log');
+  Object.assign(base, { hash: escolha.h.hash, stHash: escolha.h.st || '', recebido: `${escolha.h.dr || ''} ${escolha.h.hr || ''}`.trim(), naoTotalizado: !escolha.totalizado });
+  if (!arq) return gravar({ ...base, status: 'sem-log', erro: 'Log não listado no auxiliar' });
+  base.arquivo = arq.nm; base.url = urlArquivo(t, s, escolha.h.hash, arq.nm);
+  // Identidade verificada: mesmo hash já processado → não baixa de novo
+  if (ant && VALIDOS.has(ant.status) && ant.hash === base.hash) { S.coleta.cont.pulados++; return; }
+  let u8;
+  try { u8 = await buscar(base.url, 'buffer', { sinal }); }
+  catch (e) { if (e.name === 'AbortError') throw e; return gravar({ ...base, status: e.status === 404 ? 'nao-encontrado' : 'erro', erro: 'Log: ' + descreverErro(e) }); }
+  base.bytes = u8.length;
+  let logs;
+  try { logs = await extrairLogs(u8, arq.nm); }
+  catch (e) { return gravar({ ...base, status: 'invalido', erro: e.message }); }
+  const r = analisarLogs(logs, Pt.data, false);
+  if (r.validas === 0) return gravar({ ...base, status: 'invalido', erro: 'Nenhuma linha válida no log', linhas: r.linhas, invalidas: r.invalidas, amostrasInvalidas: r.amostrasInvalidas.slice(0, 5) });
+  gravar(montarRegistro(base, r));
+}
 
-                if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando...';
+/* ---------- Teste de conexão (valida endpoints, CORS e formato reais) ---------- */
+async function testarConexao() {
+  definirEstado('testando');
+  const ul = $('#teste-resultado'); ul.hidden = false; ul.innerHTML = '';
+  const passo = async (rot, fn) => {
+    const li = document.createElement('li'); li.className = 'executando';
+    li.innerHTML = `<span class="ic"></span><span>${esc(rot)}</span><small>executando…</small>`; ul.appendChild(li);
+    const t0 = performance.now();
+    try { const det = await fn(); li.className = 'ok'; li.querySelector('small').textContent = `${det || 'OK'} · ${Math.round(performance.now() - t0)} ms`; return true; }
+    catch (e) { li.className = 'falha'; li.querySelector('small').textContent = descreverErro(e); registrar('erro', `${rot}: ${descreverErro(e)}`); return false; }
+  };
+  const Pt = P(); let cs, sec, aux, esc1;
+  const ok = await passo('Configuração oficial de eleições (ele-c.json) e CORS', async () => validarPleitos(await buscar(URL_ELE_C, 'json', { tentativas: 2 })))
+    && await passo(`Relação de seções — AC, ${Pt.nome}`, async () => { cs = await carregarCS('ac'); return `${fmt(cs.urnas)} seções com urna própria · gerado em ${cs.dg} ${cs.hg}`; })
+    && await passo('Arquivo auxiliar de uma seção', async () => {
+      sec = cs.secoes.find(s => !s.principal); aux = await buscar(urlAux(S.turno, sec), 'json', { tentativas: 2 }); esc1 = escolherHash(aux);
+      if (!esc1) throw new Error('Auxiliar sem hashes publicados');
+      return `${sec.munNome} Z${sec.zona} S${sec.secao} · situação "${aux.st}" · hash ${esc1.h.hash.slice(0, 14)}…`; })
+    && await passo('Download, descompactação e parser do log real', async () => {
+      const arq = esc1.h.arq.find(a => a.tp === 'log'); if (!arq) throw new Error('Log não listado');
+      const u8 = await buscar(urlArquivo(S.turno, sec, esc1.h.hash, arq.nm), 'buffer', { tentativas: 2 });
+      const fmtA = detectarFormato(u8); const logs = await extrairLogs(u8, arq.nm); const r = analisarLogs(logs, Pt.data);
+      return `${arq.nm} · ${fmtBytes(u8.length)} · formato ${fmtA.toUpperCase()} → ${logs.map(l => l.nome).join(', ')} · ${fmt(r.validas)} linhas válidas, ${fmt(r.invalidas)} inválidas · ${fmt(soma(r.h.computado))} votos computados em ${Pt.data}`; });
+  if (ok) { registrar('ok', 'Teste de conexão: todos os endpoints oficiais responderam com acesso CORS.'); definirEstado('ocioso'); }
+  else { definirEstado('erro'); mostrarBanner('#banner-suporte', 'erro', '<b>Não foi possível acessar o servidor do TSE pelo navegador.</b> Pode ser falta de conexão, bloqueio por firewall, extensão ou CORS, ou indisponibilidade do servidor. Você ainda pode baixar os arquivos <code>-log.jez</code> manualmente e importá-los no painel.'); }
+}
+function validarPleitos(j) {
+  const pl = (j?.pl || []).filter(p => p.c === TSE.CICLO);
+  if (!pl.length) throw new ErroFormato('Ciclo ele2026 não encontrado em ele-c.json');
+  notarGeracao(j.dg, j.hg);
+  return [1, 2].map(t => {
+    const T = TSE.TURNOS[t], p = pl.find(x => x.cd === T.pleito);
+    if (!p) throw new ErroFormato(`Pleito ${T.pleito} não encontrado na configuração oficial`);
+    if (p.dt !== T.data) throw new ErroFormato(`Data divergente no pleito ${T.pleito}: ${p.dt}`);
+    if (!(p.e || []).some(e => e.cd === T.eleicao)) throw new ErroFormato(`Eleição ${T.eleicao} não pertence ao pleito ${T.pleito}`);
+    return `${T.nome}: pleito ${p.cd} (${p.dt}) ✓`;
+  }).join(' · ');
+}
 
-                await initPeer();
-                isHost = true; hostId = myId;
-                
-                await database.ref('rooms/' + currentRoomName).set({ hostId: myId, password: roomPassword });
+/* =====================================================================
+   10. IMPORTAÇÃO MANUAL DE ARQUIVOS
+   ===================================================================== */
+const RE_NOME = /(?:^|[\\/])([a-z])(\d{5})([a-z]{2})(\d{5})(\d{4})(\d{4})/i; // ex.: o03220ac0106600040077-log.jez
+async function sha256(u8) {
+  try { const d = await crypto.subtle.digest('SHA-256', u8); return [...new Uint8Array(d)].map(b => pad(b.toString(16))).join(''); }
+  catch { let h = 0x811c9dc5; for (let i = 0; i < u8.length; i++) { h ^= u8[i]; h = Math.imul(h, 0x01000193) >>> 0; } return 'fnv1a-' + h.toString(16) + '-' + u8.length; }
+}
+async function expandir(u8, nome, prof = 0) {
+  if (detectarFormato(u8) === 'zip') {
+    const ents = await lerZip(u8);
+    const aninhados = ents.filter(e => /\.(jez|logjez|zip)$/i.test(e.nome));
+    if (aninhados.length && prof < 2) {
+      const out = [];
+      for (const e of aninhados) { try { for (const u of await expandir(e.dados, e.nome.split('/').pop(), prof + 1)) out.push(u); } catch (err) { registrar('erro', `${e.nome}: ${err.message}`); } }
+      return out;
+    }
+    const logs = ents.filter(e => detectarFormato(e.dados) === 'texto').map(e => ({ nome: e.nome, texto: DEC.decode(e.dados) }));
+    if (!logs.length) throw new ErroFormato('Nenhum log de urna em texto no pacote');
+    return [{ nome, logs, u8 }];
+  }
+  return [{ nome, logs: await extrairLogs(u8, nome), u8 }];
+}
+async function importarArquivos(files) {
+  if (!files?.length) return;
+  definirEstado('importando');
+  let n = 0;
+  for (const file of files) {
+    try {
+      $('#c-atual').textContent = `Importando ${file.name}…`;
+      const unidades = await expandir(new Uint8Array(await file.arrayBuffer()), file.name);
+      for (const u of unidades) if (await importarUnidade(u)) n++;
+    } catch (e) { registrar('erro', `Importação de "${file.name}": ${e.message}`); }
+  }
+  DB.gravarPendentes();
+  definirEstado('ocioso');
+  $('#c-atual').textContent = `Importação concluída: ${fmt(n)} log(s) incorporado(s).`;
+  registrar('ok', `Importação concluída: ${fmt(n)} log(s) incorporado(s).`);
+  agendarRender(true);
+}
+async function importarUnidade(u) {
+  const Pt = P(); const m = RE_NOME.exec(u.nome); const sha = await sha256(u.u8);
+  let base;
+  if (m) {
+    const pleito = String(parseInt(m[2], 10));
+    if (pleito !== Pt.pleito) { registrar('aviso', `"${u.nome}" pertence ao pleito ${pleito}; o turno selecionado usa o ${Pt.pleito}. Arquivo ignorado.`); return false; }
+    const s = { uf: m[3].toLowerCase(), mun: m[4], zona: m[5], secao: m[6] };
+    let munNome = s.mun;
+    try { const cs = await S.cs.get(`${S.turno}|${s.uf}`); munNome = cs?.municipios.get(s.mun)?.nome || s.mun; } catch {}
+    base = { ...baseSecao({ ...s, munNome }), origem: 'importado' };
+  } else {
+    base = { key: `${Pt.pleito}|imp|${sha.slice(0, 20)}`, pleito: Pt.pleito, turno: S.turno, uf: '??', mun: '—', munNome: '(seção não identificada pelo nome)', zona: '—', secao: '—', origem: 'importado' };
+  }
+  const ant = S.registros.get(base.key);
+  if (ant && VALIDOS.has(ant.status)) { registrar('aviso', `${u.nome}: seção já processada (${ant.origem === 'tse' ? 'via TSE' : 'importada'}). Ignorado para não contar duas vezes.`); return false; }
+  const r = analisarLogs(u.logs, Pt.data, true);
+  Object.assign(base, { arquivo: u.nome, hash: 'sha256:' + sha, bytes: u.u8.length });
+  if (r.validas === 0) { gravar({ ...base, status: 'invalido', erro: 'Nenhuma linha válida no log importado', linhas: r.linhas, invalidas: r.invalidas, amostrasInvalidas: r.amostrasInvalidas.slice(0, 5) }); return false; }
+  const reg = montarRegistro(base, r);
+  S.eventosCache.set(reg.key, { eventos: r.eventos, amostras: r.amostrasInvalidas, fixo: true });
+  gravar(reg);
+  return true;
+}
 
-                updateParticipants([{ id: myId, nickname: myNickname, isHost: true }]);
-                document.getElementById('display-room-id').innerText = currentRoomName;
-                window.history.replaceState({}, '', '?room=' + currentRoomName);
+/* =====================================================================
+   11. FILTROS E AGREGAÇÃO
+   ===================================================================== */
+function lerFiltros() {
+  const hIni = +$('#f-hini').value, hFim = +$('#f-hfim').value;
+  S.filtros = { uf: $('#f-uf').value, mun: $('#f-mun').value, zona: $('#f-zona').value, secao: $('#f-secao').value,
+    hIni: Math.min(hIni, hFim), hFim: Math.max(hIni, hFim), tipo: $('#f-tipo').value, exterior: $('#f-exterior').checked };
+  return S.filtros;
+}
+function filtrarRegistros() {
+  const f = S.filtros, pl = P().pleito, out = [];
+  for (const r of S.registros.values()) {
+    if (r.pleito !== pl) continue;
+    if (f.uf === 'todos') { if (r.uf === 'zz' && !f.exterior) continue; }
+    else if (r.uf !== f.uf) continue;
+    if (f.mun && r.mun !== f.mun) continue;
+    if (f.zona && r.zona !== f.zona) continue;
+    if (f.secao && r.secao !== f.secao) continue;
+    out.push(r);
+  }
+  return out;
+}
+function novoAgg() { return { horas: zeros(), total: 0, secoes: 0, urnasHora: zeros() }; }
+function agregar(regs) {
+  const f = S.filtros, tipo = f.tipo;
+  const A = { ...novoAgg(), validos: 0, alerta: 0, semLog: 0, naoEnc: 0, invalidos: 0, erros: 0, linhasInvalidas: 0, foraCatalogo: 0, foraData: 0,
+    idsUrna: 0, importados: 0, porUF: new Map(), porMun: new Map(), ultimo: null, registros: regs.length };
+  for (const r of regs) {
+    if (r.processadoEm && (!A.ultimo || r.processadoEm > A.ultimo)) A.ultimo = r.processadoEm;
+    switch (r.status) { case 'sem-log': A.semLog++; break; case 'nao-encontrado': A.naoEnc++; break; case 'invalido': A.invalidos++; A.linhasInvalidas += r.invalidas || 0; break; case 'erro': A.erros++; break; case 'ok-alerta': A.alerta++; break; }
+    if (!VALIDOS.has(r.status)) continue;
+    A.validos++; A.linhasInvalidas += r.invalidas || 0; A.foraCatalogo += r.foraCatalogo || 0; A.foraData += r.fora?.[tipo] || 0;
+    A.idsUrna += (r.urnas || []).length; if (r.origem === 'importado') A.importados++;
+    let u = A.porUF.get(r.uf); if (!u) A.porUF.set(r.uf, u = novoAgg());
+    const km = r.uf + '|' + r.mun; let mu = A.porMun.get(km); if (!mu) A.porMun.set(km, mu = { ...novoAgg(), uf: r.uf, mun: r.mun, nome: r.munNome });
+    u.secoes++; mu.secoes++;
+    const h = r.h?.[tipo] || zeros();
+    for (let i = f.hIni; i <= f.hFim; i++) { const v = h[i]; if (v) { A.horas[i] += v; A.urnasHora[i]++; u.horas[i] += v; u.urnasHora[i]++; mu.horas[i] += v; mu.urnasHora[i]++; A.total += v; u.total += v; mu.total += v; } }
+  }
+  return A;
+}
+/* Denominador oficial (seções com urna própria) e comparecimento para o escopo dos filtros */
+async function obterDenominador() {
+  const f = S.filtros;
+  const k = [S.turno, f.uf, f.mun, f.zona, f.secao, f.exterior].join('|');
+  if (S.ui.denChave === k) return S.ui.den;
+  let d = null;
+  try {
+    if (f.secao) d = { secoes: 1, fonte: 'seção selecionada' };
+    else if (f.zona) { const cs = await carregarCS(f.uf); d = { secoes: (cs.municipios.get(f.mun)?.zonas.get(f.zona) || []).filter(s => !s.principal).length, fonte: 'relação oficial de seções (cs) da zona' }; }
+    else if (f.mun) { const r = await carregarResumo(f.uf, f.mun); d = { ...r, fonte: `resumo oficial do município (s.ts)` }; }
+    else if (f.uf !== 'todos') { const r = await carregarResumo(f.uf); d = { ...r, fonte: `resumo oficial da UF (s.ts)` }; }
+    else {
+      const br = await carregarResumo(null);
+      if (f.exterior) d = { ...br, fonte: 'resumo oficial BR, incluindo Exterior (s.ts)' };
+      else { const zz = await carregarResumo('zz'); d = { secoes: br.secoes - zz.secoes, comparecimento: br.comparecimento - zz.comparecimento, dg: br.dg, hg: br.hg, fonte: 'resumo oficial BR menos Exterior (s.ts)' }; }
+    }
+  } catch (e) { registrar('aviso', 'Denominador oficial indisponível: ' + descreverErro(e)); d = null; }
+  S.ui.denChave = k; S.ui.den = d;
+  return d;
+}
 
-                showRoomUI();
-                showToast('Sala criada com sucesso!');
-            } catch(e) {
-                alert('Erro ao criar sala. Verifique o console.');
-            } finally {
-                if (btn) {
-                    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus"></i> Criar e Entrar';
-                }
-            }
-        }
+/* =====================================================================
+   12. RENDERIZAÇÃO
+   ===================================================================== */
+let renderPend = false, ultimoRender = 0;
+function agendarRender(imediato = false) {
+  if (imediato) { ultimoRender = Date.now(); renderTudo(); return; }
+  if (renderPend) return; renderPend = true;
+  setTimeout(() => { renderPend = false; ultimoRender = Date.now(); renderTudo(); }, Math.max(0, 900 - (Date.now() - ultimoRender)));
+}
+function renderTudo() {
+  lerFiltros();
+  const regs = filtrarRegistros();
+  const A = agregar(regs);
+  S.ui.ultimaAgg = A; S.ui.ultimosRegs = regs;
+  $('#h-processamento').textContent = A.ultimo ? fmtDH(A.ultimo) : '—';
+  renderKPIs(A, S.ui.denChave ? S.ui.den : null);
+  obterDenominador().then(d => { renderKPIs(S.ui.ultimaAgg, d); });
+  prepararGrafico(A, regs); desenharGrafico();
+  renderAbaAtiva();
+  renderProgresso();
+}
+function animarNumero(el, valor, txt) {
+  const ant = parseFloat(el.dataset.v || '0'); el.dataset.v = valor;
+  if (!isFinite(valor) || ant === valor || matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = txt(valor); return; }
+  const t0 = performance.now(), dur = 450;
+  const passo = t => { const p = Math.min(1, (t - t0) / dur), e = 1 - (1 - p) ** 3; el.textContent = txt(p < 1 ? Math.round(ant + (valor - ant) * e) : valor); if (p < 1) requestAnimationFrame(passo); };
+  requestAnimationFrame(passo);
+}
+function renderKPIs(A, den) {
+  const f = S.filtros, tipo = f.tipo, rangeTotal = f.hIni === 0 && f.hFim === 23;
+  $('#k1-rot').textContent = tipo === 'computado' ? 'Eventos de voto computado' : `Eventos: ${TIPO_ROT[tipo]}`;
+  animarNumero($('#k1'), A.total, fmt);
+  $('#k1-sub').textContent = tipo === 'computado'
+    ? `identificados em ${fmt(A.validos)} log(s)${rangeTotal ? '' : ` · ${pad(f.hIni)}h–${pad(f.hFim)}h`}${A.foraData ? ` · ${fmt(A.foraData)} fora da data descartados` : ''}`
+    : 'atenção: este tipo NÃO equivale a votos';
+  animarNumero($('#k2'), A.validos, fmt);
+  $('#k2-sub').textContent = `${fmt(A.idsUrna)} identificador(es) de urna na data${A.importados ? ` · ${fmt(A.importados)} importado(s)` : ''}`;
+  const encontrados = A.validos + A.invalidos;
+  $('#k3').textContent = `${fmt(A.validos)} / ${fmt(encontrados)}`;
+  $('#k3-sub').textContent = `${fmt(A.alerta)} c/ alertas · ${fmt(A.semLog + A.naoEnc)} indisponíveis · ${fmt(A.invalidos)} inválidos · ${fmt(A.erros)} erros`;
+  let cob = null;
+  if (den && den.secoes > 0) {
+    cob = Math.min(100, A.validos / den.secoes * 100);
+    $('#k4').textContent = fmtPct(cob, cob > 0 && cob < 0.1 ? 3 : 1);
+    $('#k4-sub').textContent = `${fmt(A.validos)} de ${fmt(den.secoes)} seções · ${den.fonte}`;
+  } else { $('#k4').textContent = '—'; $('#k4-sub').textContent = den === null && S.ui.denChave ? 'denominador oficial indisponível para este escopo' : 'consultando denominador oficial…'; }
+  animarNumero($('#k5'), A.linhasInvalidas, fmt);
+  $('#k5-sub').textContent = `linhas com formato inválido · ${fmt(A.foraCatalogo)} linhas válidas fora do catálogo de eventos`;
+  renderConferencia(A, den, cob, rangeTotal);
+  renderBannerParcial(A, den, cob);
+}
+function renderConferencia(A, den, cob, rangeTotal) {
+  const el = $('#conferencia');
+  if (!den || !isFinite(den.comparecimento)) { el.innerHTML = `<span class="tag na">Conferência</span> Comparecimento oficial indisponível para este escopo (zona/seção ou falha de acesso).`; return; }
+  const base = `<span class="tag ${'X'}">Conferência</span> Comparecimento oficial do TSE no escopo: <b>${fmt(den.comparecimento)}</b> (resumo gerado em ${esc(den.dg || '—')} ${esc(den.hg || '')}).`;
+  if (cob < 100 || S.filtros.tipo !== 'computado' || !rangeTotal) {
+    el.innerHTML = base.replace('X', 'na') + ` A comparação só é feita com 100% de cobertura, tipo "Voto computado" e intervalo 00h–23h. <b>Os números parciais não são extrapolados.</b>`;
+    return;
+  }
+  const dif = A.total - den.comparecimento;
+  el.innerHTML = dif === 0
+    ? base.replace('X', 'ok') + ` Eventos identificados: <b>${fmt(A.total)}</b> ✓ <b>conferem exatamente</b>.`
+    : base.replace('X', 'dif') + ` Eventos identificados: <b>${fmt(A.total)}</b>. Diferença de <b>${dif > 0 ? '+' : ''}${fmt(dif)}</b>, que pode vir de votos em cédula, logs com alertas ou urnas substituídas. Veja a aba "Arquivos processados".`;
+}
+function mostrarBanner(sel, tipo, html) {
+  const ic = { aviso: '<path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>', sucesso: '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>', erro: '<circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/>' }[tipo];
+  $(sel).innerHTML = html ? `<div class="banner ${tipo}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ic}</svg><div>${html}</div></div>` : '';
+}
+function renderBannerParcial(A, den, cob) {
+  if (!A.validos) return mostrarBanner('#banner-parcial', 'info', '<b>Nenhum log processado para este turno e escopo.</b> Clique em <b>Testar conexão</b>, depois em <b>Validação rápida</b> (34 seções reais de Porto Walter/AC) ou em <b>Iniciar coleta</b>. Você também pode importar arquivos baixados do TSE. Nenhum número é exibido antes da coleta.');
+  if (cob != null && cob >= 100) return mostrarBanner('#banner-parcial', 'sucesso', `<b>Cobertura completa do escopo:</b> ${fmt(A.validos)} de ${fmt(den.secoes)} seções com urna própria tiveram o log processado.`);
+  mostrarBanner('#banner-parcial', 'aviso', `<b>RESULTADO PARCIAL.</b> Foram processados ${fmt(A.validos)} logs${den ? ` de ${fmt(den.secoes)} seções do escopo (${fmtPct(cob, 2)})` : ' (denominador oficial indisponível)'}. Os totais referem-se apenas às urnas processadas e <b>não representam o total ${S.filtros.uf === 'todos' ? 'nacional' : 'do escopo'}</b>. Não há extrapolação.`);
+}
+function renderProgresso() {
+  const C = S.coleta, c = C.cont;
+  const feitos = C.total ? Math.min(C.total, C.total - filaRestante()) : 0;
+  $('#c-barra').style.width = C.total ? (feitos / C.total * 100).toFixed(2) + '%' : '0%';
+  const dt = (performance.now() - (C.inicio || performance.now())) / 1000;
+  const taxa = C.estado === 'coletando' && dt > 2 ? (c.processadas + c.pulados - (C.procIni || 0)) / dt : 0;
+  const bps = C.estado === 'coletando' && dt > 2 ? (c.bytes - (C.bytesIni || 0)) / dt : 0;
+  const itens = [['Na fila', fmt(filaRestante())], ['Concluídas', `${fmt(feitos)} / ${fmt(C.total)}`], ['Válidos', fmt(c.ok + c.alerta)], ['Com alertas', fmt(c.alerta)],
+    ['Sem log', fmt(c.semLog)], ['404', fmt(c.naoEnc)], ['Inválidos', fmt(c.invalidos)], ['Erros', fmt(c.erros)], ['Já processadas', fmt(c.pulados)],
+    ['Baixado', fmtBytes(c.bytes)], ['Ritmo', taxa ? `${taxa.toFixed(1)} seç/s · ${fmtBytes(bps)}/s` : '—'], ['Restante', taxa ? fmtDur(filaRestante() / taxa) : '—']];
+  $('#c-stats').innerHTML = itens.map(([k, v]) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join('');
+}
 
-        async function joinRoom() {
-            myNickname = document.getElementById('nickname').value.trim() || 'Espectador';
-            currentRoomName = document.getElementById('join-room-id').value.trim();
-            const pwd = document.getElementById('join-password').value;
-            roomPassword = pwd;
-            if(!currentRoomName) return alert('Digite o Nome da sala!');
-            const btn = document.getElementById('btn-join');
-            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando...';
-            
-            isJoining = true;
+/* ---------- Gráfico em Canvas nativo ---------- */
+function prepararGrafico(A, regs) {
+  const f = S.filtros, modo = S.ui.modo; let series = [], nota = '';
+  const rotEscopo = f.secao ? `Seção ${f.secao}` : f.zona ? `Zona ${f.zona}` : f.mun ? (S.ui.munNome || f.mun) : f.uf !== 'todos' ? UF_NOME[f.uf] : (f.exterior ? 'Brasil + Exterior' : 'Brasil (27 UFs)');
+  if (modo === 'brasil') series = [{ nome: rotEscopo, vals: A.horas.slice() }];
+  else if (modo === 'estados') {
+    const top = [...A.porUF.entries()].sort((a, b) => b[1].total - a[1].total).slice(0, 8);
+    series = top.map(([uf, g]) => ({ nome: `${uf.toUpperCase()} · ${UF_NOME[uf] || uf}`, vals: g.horas.slice() }));
+    if (A.porUF.size > 8) nota = `Exibindo os 8 estados com mais eventos (de ${A.porUF.size}). `;
+    if (A.porUF.size <= 1) nota += 'Para comparar estados, selecione "Brasil inteiro" e colete mais de uma UF. ';
+  } else if (modo === 'municipios') {
+    const top = [...A.porMun.values()].sort((a, b) => b.total - a.total).slice(0, 8);
+    series = top.map(g => ({ nome: `${g.nome} (${g.uf.toUpperCase()})`, vals: g.horas.slice() }));
+    if (A.porMun.size > 8) nota = `Exibindo os 8 municípios com mais eventos (de ${fmt(A.porMun.size)}). `;
+  } else if (modo === 'secao') {
+    const val = regs.filter(r => VALIDOS.has(r.status));
+    let r = f.secao ? val[0] : val.reduce((m, x) => (!m || soma(x.h[f.tipo]) > soma(m.h[f.tipo])) ? x : m, null);
+    if (r) { const v = zeros(); for (let i = f.hIni; i <= f.hFim; i++) v[i] = r.h[f.tipo][i]; series = [{ nome: `${rotSecao(r)}`, vals: v }]; }
+    if (!f.secao && r) nota = 'Nenhuma seção selecionada nos filtros. Exibindo a seção com mais eventos do escopo. ';
+  }
+  // Intervalo de horas e recorte de horas vazias
+  let horas = []; for (let h = f.hIni; h <= f.hFim; h++) horas.push(h);
+  if (S.ui.recortar && series.length) {
+    const tem = h => series.some(s => s.vals[h] > 0);
+    while (horas.length > 1 && !tem(horas[0])) horas.shift();
+    while (horas.length > 1 && !tem(horas[horas.length - 1])) horas.pop();
+  }
+  const pct = S.ui.escala === 'pct';
+  series.forEach((s, i) => { s.cor = CORES[i % CORES.length]; s.total = horas.reduce((a, h) => a + s.vals[h], 0); s.plot = horas.map(h => pct ? (s.total ? s.vals[h] / s.total * 100 : 0) : s.vals[h]); s.brutos = horas.map(h => s.vals[h]); });
+  const max = Math.max(0, ...series.flatMap(s => s.plot));
+  S.ui.grafico = { series, horas, max, pct };
+  $('#g-legenda').innerHTML = series.map(s => `<span><i style="background:${s.cor}"></i>${esc(s.nome)} <b>${fmt(s.total)}</b></span>`).join('');
+  const fusos = new Set([...A.porUF.keys()].map(u => UF_FUSO[u]));
+  $('#g-nota').textContent = nota + `Horário local gravado pela urna, truncado na hora cheia. ${fusos.size > 1 ? 'Atenção: o escopo mistura fusos horários diferentes. ' : ''}Tipo: ${TIPO_ROT[f.tipo]}${f.tipo !== 'computado' ? ' (não equivale a votos)' : ''}.`;
+  $('#g-sub').textContent = `${rotEscopo} · ${P().nome} (${P().data}) · ${pct ? 'percentual de cada série' : 'quantidade de eventos'}`;
+}
+function escalaBonita(m) { if (m <= 0) return 1; const e = 10 ** Math.floor(Math.log10(m)); const x = m / e; return (x <= 1 ? 1 : x <= 2 ? 2 : x <= 2.5 ? 2.5 : x <= 5 ? 5 : 10) * e; }
+function retTopo(ctx, x, y, w, h, r) { r = Math.max(0, Math.min(r, w / 2, h)); ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h); ctx.closePath(); ctx.fill(); }
+let animGraf = null;
+function desenharGrafico(animar = S.ui.animar) {
+  S.ui.animar = false;
+  if (animar && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    cancelAnimationFrame(animGraf); const t0 = performance.now();
+    const passo = t => { const p = Math.min(1, (t - t0) / 650); desenharQuadro(1 - (1 - p) ** 3); if (p < 1) animGraf = requestAnimationFrame(passo); };
+    animGraf = requestAnimationFrame(passo);
+  } else desenharQuadro(1);
+}
+function desenharQuadro(prog) {
+  const cv = $('#grafico'), ctx = cv.getContext('2d'), dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const G = S.ui.grafico;
+  ctx.font = '500 12px Inter, system-ui, sans-serif';
+  if (!G || !G.series.length || G.max === 0) {
+    ctx.fillStyle = '#66738c'; ctx.textAlign = 'center';
+    ctx.fillText('Sem eventos para exibir com os filtros atuais.', W / 2, H / 2 - 8);
+    ctx.fillText('Colete ou importe logs oficiais para ver o gráfico.', W / 2, H / 2 + 12);
+    S.ui.geo = null; return;
+  }
+  const pd = { l: W < 500 ? 46 : 64, r: 14, t: 16, b: 36 }, pw = W - pd.l - pd.r, ph = H - pd.t - pd.b;
+  const n = G.horas.length, slot = pw / n, maxY = escalaBonita(G.max * 1.05);
+  // Grade e eixo Y
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let i = 0; i <= 5; i++) {
+    const v = maxY * i / 5, y = pd.t + ph - ph * i / 5;
+    ctx.strokeStyle = i === 0 ? 'rgba(148,163,184,.3)' : 'rgba(148,163,184,.08)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pd.l, Math.round(y) + .5); ctx.lineTo(W - pd.r, Math.round(y) + .5); ctx.stroke();
+    ctx.fillStyle = '#66738c'; ctx.fillText(G.pct ? fmtPct(v, v < 10 && v % 1 ? 1 : 0) : (v >= 10000 ? NFC.format(v) : fmt(Math.round(v))), pd.l - 8, y);
+  }
+  // Destaque da hora sob o cursor
+  if (S.ui.hover != null && S.ui.hover < n) { ctx.fillStyle = 'rgba(148,163,184,.07)'; ctx.fillRect(pd.l + slot * S.ui.hover, pd.t, slot, ph); }
+  // Eixo X (horas)
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#97a3bb';
+  const passoX = Math.max(1, Math.ceil(30 / slot));
+  G.horas.forEach((h, i) => { if (i % passoX === 0) ctx.fillText(pad(h) + 'h', pd.l + slot * i + slot / 2, H - pd.b + 20); });
+  const ns = G.series.length;
+  if (S.ui.tipoGraf === 'barras') {
+    const gw = slot * (ns > 1 ? .84 : .64), bw = gw / ns;
+    G.series.forEach((s, si) => {
+      const gr = ctx.createLinearGradient(0, pd.t, 0, pd.t + ph); gr.addColorStop(0, s.cor); gr.addColorStop(1, s.cor + '55');
+      ctx.fillStyle = gr;
+      s.plot.forEach((v, i) => { const hh = ph * (v / maxY) * prog; if (hh <= 0) return; const x = pd.l + slot * i + (slot - gw) / 2 + bw * si; retTopo(ctx, x + (ns > 1 ? .5 : 0), pd.t + ph - hh, Math.max(1, bw - (ns > 1 ? 1 : 0)), hh, Math.min(6, bw / 3)); });
+    });
+  } else {
+    G.series.forEach(s => {
+      const pts = s.plot.map((v, i) => [pd.l + slot * i + slot / 2, pd.t + ph - ph * (v / maxY) * prog]);
+      if (ns === 1) { const gr = ctx.createLinearGradient(0, pd.t, 0, pd.t + ph); gr.addColorStop(0, s.cor + '55'); gr.addColorStop(1, s.cor + '00'); ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(pts[0][0], pd.t + ph); pts.forEach(p => ctx.lineTo(p[0], p[1])); ctx.lineTo(pts[pts.length - 1][0], pd.t + ph); ctx.closePath(); ctx.fill(); }
+      ctx.strokeStyle = s.cor; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
+      ctx.fillStyle = '#0a1120'; pts.forEach(p => { ctx.beginPath(); ctx.arc(p[0], p[1], 3.4, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = s.cor; ctx.lineWidth = 2; ctx.stroke(); });
+    });
+  }
+  S.ui.geo = { pd, slot, n, ph };
+}
+function tooltipGrafico(ev) {
+  const G = S.ui.grafico, geo = S.ui.geo, tt = $('#tooltip');
+  if (!G || !geo) { tt.classList.remove('vis'); return; }
+  const rect = ev.target.getBoundingClientRect(), x = ev.clientX - rect.left;
+  const i = Math.floor((x - geo.pd.l) / geo.slot);
+  if (i < 0 || i >= geo.n) { if (S.ui.hover != null) { S.ui.hover = null; desenharQuadro(1); } tt.classList.remove('vis'); return; }
+  if (S.ui.hover !== i) { S.ui.hover = i; desenharQuadro(1); }
+  const h = G.horas[i];
+  tt.innerHTML = `<div class="th">${pad(h)}h00 – ${pad(h)}h59</div>` + G.series.map(s => `<div class="tr"><span><i style="background:${s.cor}"></i>${esc(s.nome.length > 26 ? s.nome.slice(0, 25) + '…' : s.nome)}</span><b>${fmt(s.brutos[i])}${s.total ? ` <small>(${fmtPct(s.brutos[i] / s.total * 100, 1)})</small>` : ''}</b></div>`).join('');
+  tt.classList.add('vis');
+  const tw = tt.offsetWidth, th = tt.offsetHeight;
+  tt.style.left = Math.min(window.innerWidth - tw - 10, ev.clientX + 14) + 'px';
+  tt.style.top = Math.max(10, ev.clientY - th - 12) + 'px';
+}
 
-            try {
-                const snapshot = await database.ref('rooms/' + currentRoomName).once('value');
-                if (!snapshot.exists()) {
-                    showToast('Sala não encontrada. Criando sala...', 'fa-magic');
-                    isJoining = false;
-                    resetUI();
-                    if(document.getElementById('create-room-name')) document.getElementById('create-room-name').value = currentRoomName;
-                    document.getElementById('host-password').value = pwd;
-                    await createRoom(pwd);
-                    return;
-                }
-                const roomData = snapshot.val();
-                hostId = roomData.hostId;
+/* ---------- Tabela genérica com ordenação, busca e paginação ---------- */
+function tabela(id, colunas, linhas, { porPagina = 50, rodape = null, vazio = 'Sem dados para os filtros atuais.' } = {}) {
+  const st = S.ui.tab[id] || (S.ui.tab[id] = { col: null, dir: -1, q: '', pg: 0 });
+  let rows = linhas;
+  if (st.q) { const q = norm(st.q); rows = rows.filter(r => colunas.some(c => norm(c.txt ? c.txt(r) : c.v(r)).includes(q))); }
+  if (st.col != null && colunas[st.col]) { const c = colunas[st.col]; rows = [...rows].sort((a, b) => { const x = c.v(a), y = c.v(b); return (x == null ? -Infinity : x) > (y == null ? -Infinity : y) ? st.dir : (x == null ? -Infinity : x) < (y == null ? -Infinity : y) ? -st.dir : 0; }); }
+  const paginas = Math.max(1, Math.ceil(rows.length / porPagina)); st.pg = Math.min(st.pg, paginas - 1);
+  const vis = rows.slice(st.pg * porPagina, (st.pg + 1) * porPagina);
+  const cab = colunas.map((c, i) => `<th data-col="${i}" class="${c.num ? 'num' : ''} ${c.nosort ? 'nosort' : ''} ${st.col === i ? 'ord' + (st.dir > 0 ? ' asc' : '') : ''}">${c.t}</th>`).join('');
+  const corpo = vis.length ? vis.map(r => `<tr>${colunas.map(c => `<td class="${c.num ? 'num' : ''} ${c.cls ? c.cls(r) : ''}" ${c.estilo ? `style="${c.estilo(r)}"` : ''}>${c.r ? c.r(r) : esc(c.v(r) ?? '—')}</td>`).join('')}</tr>`).join('')
+    : `<tr><td colspan="${colunas.length}"><div class="vazio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7h18M3 12h18M3 17h10"/></svg>${vazio}</div></td></tr>`;
+  const pe = rodape && vis.length ? `<tfoot><tr>${rodape.map((v, i) => `<td class="${colunas[i]?.num ? 'num' : ''}">${v}</td>`).join('')}</tr></tfoot>` : '';
+  const pag = paginas > 1 ? `<div class="paginacao"><span>${fmt(rows.length)} linhas · página ${st.pg + 1} de ${fmt(paginas)}</span><button class="btn btn-mini" data-pg="-1" ${st.pg ? '' : 'disabled'}>‹ Anterior</button><button class="btn btn-mini" data-pg="1" ${st.pg < paginas - 1 ? '' : 'disabled'}>Próxima ›</button></div>`
+    : `<div class="paginacao"><span>${fmt(rows.length)} linha(s)</span></div>`;
+  const el = $('#tab-' + id);
+  el.innerHTML = `<div class="tab-scroll"><table><thead><tr>${cab}</tr></thead><tbody>${corpo}</tbody>${pe}</table></div>${pag}`;
+  el.dataset.tabela = id;
+}
+function picoHora(horas) { let m = -1, h = null; horas.forEach((v, i) => { if (v > m && v > 0) { m = v; h = i; } }); return h; }
 
-                await initPeer();
-                isHost = false;
-                const conn = peer.connect(hostId, { metadata: { nickname: myNickname, password: pwd }, reliable: true });
-                joinTimeout = setTimeout(() => {
-                    isJoining = false;
-                    alert('Tempo esgotado. O Host não está online.');
-                    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Entrar na Sala';
-                    resetUI();
-                }, 8000);
-                conn.on('open', () => {
-                    isJoining = false;
-                    clearTimeout(joinTimeout);
-                    setupDataConnectionEvents(conn);
-                    document.getElementById('display-room-id').innerText = currentRoomName;
-                    window.history.replaceState({}, '', '?room=' + currentRoomName);
-                    showRoomUI();
-                    showToast('Autenticado com sucesso!', 'fa-check');
-                    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Entrar na Sala';
-                });
-            } catch(e) {
-                isJoining = false;
-                alert('Erro na conexão com o servidor de sinalização.');
-                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Entrar na Sala';
-            }
-        }
-        
-        function handleIncomingConnection(conn) {
-            if (isHost) {
-                const { nickname, password } = conn.metadata || {};
-                if (roomPassword && password !== roomPassword) {
-                    conn.on('open', () => {
-                        conn.send({ type: 'auth-error', message: 'Senha incorreta!' });
-                        setTimeout(() => conn.close(), 500);
-                    });
-                    return;
-                }
-                conn.on('open', () => {
-                    setupDataConnectionEvents(conn);
-                    const newList = [...participants, { id: conn.peer, nickname: nickname || 'Anônimo', isHost: false }];
-                    updateParticipants(newList);
-                    broadcastToMesh({ type: 'sync-participants', list: newList });
-                    showToast(`${nickname} entrou na sala.`, 'fa-user-plus');
-                });
-            } else {
-                conn.on('open', () => setupDataConnectionEvents(conn));
-            }
-        }
+/* Linhas das tabelas (também usadas na exportação CSV) */
+function linhasHora(A) {
+  const f = S.filtros, out = []; let ant = null;
+  for (let h = f.hIni; h <= f.hFim; h++) {
+    const v = A.horas[h];
+    out.push({ hora: h, rot: `${pad(h)}h00–${pad(h)}h59`, eventos: v, urnas: A.urnasHora[h], pct: A.total ? v / A.total * 100 : 0, varAbs: ant == null ? null : v - ant, varPct: ant ? (v - ant) / ant * 100 : null });
+    ant = v;
+  }
+  return out;
+}
+function linhasUF(A) {
+  return [...A.porUF.entries()].map(([uf, g]) => ({ uf, nome: UF_NOME[uf] || uf, fuso: UF_FUSO[uf] || '—', secoes: g.secoes, total: g.total, pct: A.total ? g.total / A.total * 100 : 0, pico: picoHora(g.horas), horas: g.horas }));
+}
+function linhasMun(A) {
+  return [...A.porMun.values()].map(g => {
+    let cad = null; const cs = S.ui.csResolvidos?.[`${S.turno}|${g.uf}`]; if (cs) cad = cs.municipios.get(g.mun)?.urnas ?? null;
+    return { uf: g.uf, mun: g.mun, nome: g.nome, secoes: g.secoes, cadastro: cad, total: g.total, pct: A.total ? g.total / A.total * 100 : 0, pico: picoHora(g.horas), horas: g.horas };
+  });
+}
+function renderAbaAtiva() {
+  const A = S.ui.ultimaAgg; if (!A) return;
+  const aba = S.ui.aba;
+  if (aba === 'hora') {
+    const rows = linhasHora(A), max = Math.max(1, ...rows.map(r => r.eventos));
+    tabela('hora', [
+      { t: 'Hora', v: r => r.hora, txt: r => r.rot + ' ' + r.hora + 'h', r: r => `<b>${r.rot}</b>` },
+      { t: 'Eventos identificados', num: true, v: r => r.eventos, cls: () => 'cel-barra', estilo: r => `--p:${(r.eventos / max * 100).toFixed(1)}%`, r: r => `<span>${fmt(r.eventos)}</span>` },
+      { t: 'Urnas que contribuíram', num: true, v: r => r.urnas, r: r => fmt(r.urnas) },
+      { t: '% do total processado', num: true, v: r => r.pct, r: r => fmtPct(r.pct) },
+      { t: 'Variação vs hora anterior', num: true, v: r => r.varAbs, r: r => r.varAbs == null ? '—' : `<span class="${r.varAbs > 0 ? 'pos' : r.varAbs < 0 ? 'neg' : ''}">${r.varAbs > 0 ? '+' : ''}${fmt(r.varAbs)}</span> <small>${r.varPct == null ? '' : '(' + (r.varPct > 0 ? '+' : '') + fmtPct(r.varPct, 1) + ')'}</small>` }
+    ], rows, { porPagina: 24, rodape: ['Total', fmt(A.total), `${fmt(A.validos)} logs`, A.total ? '100,00%' : '—', ''] });
+  } else if (aba === 'uf') {
+    tabela('uf', [
+      { t: 'UF', v: r => r.uf.toUpperCase(), r: r => `<b>${r.uf.toUpperCase()}</b>` },
+      { t: 'Estado', v: r => r.nome }, { t: 'Fuso da urna', v: r => r.fuso },
+      { t: 'Seções processadas', num: true, v: r => r.secoes, r: r => fmt(r.secoes) },
+      { t: 'Eventos', num: true, v: r => r.total, r: r => fmt(r.total) },
+      { t: '% do total', num: true, v: r => r.pct, r: r => fmtPct(r.pct) },
+      { t: 'Hora de pico (local)', num: true, v: r => r.pico, r: r => r.pico == null ? '—' : pad(r.pico) + 'h' }
+    ], linhasUF(A));
+  } else if (aba === 'mun') {
+    resolverCS().then(() => {
+      if (S.ui.aba !== 'mun') return;
+      tabela('mun', [
+        { t: 'UF', v: r => r.uf.toUpperCase() }, { t: 'Cód. TSE', v: r => r.mun, r: r => `<span class="mono">${esc(r.mun)}</span>` },
+        { t: 'Município', v: r => r.nome, r: r => `<b>${esc(r.nome)}</b>` },
+        { t: 'Logs válidos', num: true, v: r => r.secoes, r: r => fmt(r.secoes) },
+        { t: 'Seções com urna (cadastro)', num: true, v: r => r.cadastro, r: r => r.cadastro == null ? '—' : fmt(r.cadastro) },
+        { t: 'Cobertura', num: true, v: r => r.cadastro ? r.secoes / r.cadastro : null, r: r => r.cadastro ? fmtPct(Math.min(100, r.secoes / r.cadastro * 100), 1) : '—' },
+        { t: 'Eventos', num: true, v: r => r.total, r: r => fmt(r.total) },
+        { t: '% do total', num: true, v: r => r.pct, r: r => fmtPct(r.pct) },
+        { t: 'Pico', num: true, v: r => r.pico, r: r => r.pico == null ? '—' : pad(r.pico) + 'h' }
+      ], linhasMun(A));
+      $('#mun-info').textContent = `${fmt(A.porMun.size)} município(s) com logs válidos no escopo`;
+    });
+  } else if (aba === 'arq') {
+    const stF = $('#arq-status').value;
+    const regs = S.ui.ultimosRegs.filter(r => !stF || r.status === stF);
+    tabela('arq', [
+      { t: 'UF', v: r => (r.uf || '').toUpperCase() }, { t: 'Município', v: r => r.munNome || r.mun },
+      { t: 'Zona', v: r => r.zona }, { t: 'Seção', v: r => r.secao },
+      { t: 'Identificador do arquivo', v: r => r.arquivo || '', txt: r => `${r.arquivo || ''} ${r.hash || ''}`, r: r => `<span class="mono" title="${esc(r.hash || '')}">${esc(r.arquivo || '—')}</span><br><small class="mono">${esc((r.hash || '').slice(0, 24))}${(r.hash || '').length > 24 ? '…' : ''}</small>` },
+      { t: 'Situação', v: r => STATUS[r.status]?.[0] || r.status, r: r => `<span class="chip ${STATUS[r.status]?.[1] || 'neutro'}" title="${esc((r.alertas || []).join(' | ') || r.erro || '')}">${STATUS[r.status]?.[0] || esc(r.status)}</span>` },
+      { t: 'Votos computados', num: true, v: r => r.h ? soma(r.h.computado) : null, r: r => r.h ? fmt(soma(r.h.computado)) : '—' },
+      { t: '1º / último voto', v: r => r.primeiro || '', r: r => r.primeiro ? `${r.primeiro} – ${r.ultimo}` : '—' },
+      { t: 'Origem', v: r => r.origem, r: r => `<span class="chip ${r.origem === 'tse' ? 'tse' : 'imp'}">${r.origem === 'tse' ? 'TSE' : 'Importado'}</span>` },
+      { t: '', nosort: true, v: () => '', r: r => `<button class="btn btn-mini" data-ver="${esc(r.key)}">Detalhes</button>` }
+    ], regs, { vazio: 'Nenhum arquivo processado neste escopo.' });
+  } else if (aba === 'ativ') renderAtividade();
+}
+/* Resolve as relações de seções (cs) já carregadas para mostrar o cadastro na aba de municípios */
+async function resolverCS() {
+  S.ui.csResolvidos = S.ui.csResolvidos || {};
+  for (const [k, pr] of S.cs) { if (!S.ui.csResolvidos[k]) { try { S.ui.csResolvidos[k] = await pr; } catch {} } }
+}
+function renderAtividade() {
+  $('#atividade').innerHTML = S.atividade.length ? S.atividade.map(a => `<li><time>${a.t.toLocaleTimeString('pt-BR')}</time><span class="n ${a.nivel}">${a.nivel}</span><span>${esc(a.msg)}</span></li>`).join('') : '<li><span></span><span></span><span class="muted">Sem atividades registradas.</span></li>';
+}
 
-        function setupDataConnectionEvents(conn) {
-            dataConnections[conn.peer] = conn;
-            peerLastSeen[conn.peer] = Date.now();
+/* ---------- Modal de auditoria de um arquivo ---------- */
+async function abrirDetalhes(key) {
+  const r = S.registros.get(key); if (!r) return;
+  const dlg = $('#modal'), corpo = $('#modal-corpo');
+  $('#modal-tit').textContent = `Log · ${rotSecao(r)}`;
+  const tot = t => r.h ? fmt(soma(r.h[t])) : '—';
+  const defs = [['UF', (r.uf || '').toUpperCase() + ' — ' + (UF_NOME[r.uf] || '')], ['Município', `${r.munNome} (${r.mun})`], ['Zona / Seção', `${r.zona} / ${r.secao}`],
+    ['Situação', STATUS[r.status]?.[0] || r.status], ['Origem', r.origem === 'tse' ? 'Download direto do TSE' : 'Importado manualmente'], ['Arquivo', r.arquivo || '—'],
+    ['Hash / identificador', r.hash || '—'], ['Situação no auxiliar', `${r.stAux || '—'}${r.stHash ? ' · ' + r.stHash : ''}${r.recebido ? ' · recebido ' + r.recebido : ''}`],
+    ['Tamanho', r.bytes ? fmtBytes(r.bytes) : '—'], ['Entradas no pacote', (r.entradas || []).join(', ') || '—'], ['IDs de urna na data', (r.urnas || []).join(', ') || '—'],
+    ['Seções agregadas', (r.agregadas || []).join(', ') || 'nenhuma'], ['Linhas (válidas / inválidas)', `${fmt(r.validas)} / ${fmt(r.invalidas)}`],
+    ['Votos computados na data', tot('computado')], ['Habilitações / confirmações', `${tot('habilitado')} / ${tot('confirmado')}`], ['Eventos fora da data', r.fora ? fmt(soma(Object.values(r.fora))) : '—'],
+    ['1º e último voto', r.primeiro ? `${r.primeiro} – ${r.ultimo}` : '—'], ['Processado em', fmtDH(r.processadoEm)]];
+  corpo.innerHTML = `<div class="defs">${defs.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>
+    ${r.url ? `<p class="dica">Endereço oficial: <a href="${esc(r.url)}" target="_blank" rel="noopener" class="mono">${esc(r.url)}</a></p>` : ''}
+    ${r.erro ? `<div class="banner erro"><div><b>Erro:</b> ${esc(r.erro)}</div></div>` : ''}
+    ${(r.alertas || []).length ? `<div class="banner aviso"><div><b>Alertas:</b><br>${r.alertas.map(esc).join('<br>')}</div></div>` : ''}
+    ${(r.amostrasInvalidas || []).length ? `<h3 style="margin:10px 0 6px">Amostra de linhas não reconhecidas</h3><div class="tab-scroll"><table><thead><tr><th class="nosort">Arquivo:linha</th><th class="nosort">Motivo</th><th class="nosort">Texto (mascarado)</th></tr></thead><tbody>${r.amostrasInvalidas.map(a => `<tr><td class="mono">${esc(a.arquivo)}:${a.n}</td><td>${esc(a.motivo || '')}</td><td class="bruto">${esc(a.texto)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    <h3 style="margin:16px 0 8px">Eventos reconhecidos (texto original para auditoria)</h3><div id="modal-eventos"><p class="muted">Carregando eventos…</p></div>`;
+  if (!dlg.open) dlg.showModal();
+  let cache = S.eventosCache.get(key);
+  if (!cache && r.url && VALIDOS.has(r.status)) {
+    try {
+      const u8 = await buscar(r.url, 'buffer', { tentativas: 2 });
+      const res = analisarLogs(await extrairLogs(u8, r.arquivo), TSE.TURNOS[r.turno].data, true);
+      cache = { eventos: res.eventos, amostras: res.amostrasInvalidas };
+      S.eventosCache.set(key, cache);
+      for (const [k, v] of S.eventosCache) { if (S.eventosCache.size <= 25) break; if (!v.fixo) S.eventosCache.delete(k); }
+    } catch (e) { $('#modal-eventos').innerHTML = `<div class="banner erro"><div>Não foi possível recarregar o log: ${esc(descreverErro(e))}</div></div>`; return; }
+  }
+  if (!cache) { $('#modal-eventos').innerHTML = `<p class="muted">Texto original indisponível${r.origem === 'importado' ? ': arquivos importados ficam em memória só durante a sessão. Importe novamente para auditar.' : '.'}</p>`; return; }
+  renderEventosModal(key, cache);
+}
+function renderEventosModal(key, cache) {
+  const box = $('#modal-eventos'); const st = S.ui.modalEv || (S.ui.modalEv = { tipo: 'computado', data: true });
+  box.innerHTML = `<div class="barra-tab"><div class="esq"><select id="ev-tipo" aria-label="Tipo de evento"><option value="">Todos os tipos reconhecidos</option>${CATALOGO.map(c => `<option value="${c.id}" ${st.tipo === c.id ? 'selected' : ''}>${c.rotulo}</option>`).join('')}</select>
+    <label class="chk"><input type="checkbox" id="ev-data" ${st.data ? 'checked' : ''}> Somente data da eleição</label><input type="search" id="busca-ev" placeholder="Buscar hora, hash…" aria-label="Buscar evento"></div>
+    <button class="btn btn-mini" id="exp-eventos">CSV destes eventos</button></div><div id="tab-ev"></div>`;
+  const desenhar = () => {
+    const evs = cache.eventos.filter(e => (!st.tipo || e.tipo === st.tipo) && (!st.data || e.naData));
+    S.ui.evVisiveis = evs;
+    tabela('ev', [
+      { t: 'Data e hora (local)', v: e => e.dt, r: e => `<span class="mono">${esc(e.dt)}</span>` },
+      { t: 'Hora', num: true, v: e => e.hora, r: e => pad(e.hora) + 'h' },
+      { t: 'Tipo', v: e => TIPO_ROT[e.tipo] }, { t: 'Categoria', v: e => `${e.app} · ${e.nivel}` },
+      { t: 'Mensagem original', v: e => e.msg }, { t: 'Hash da linha', v: e => e.hashLinha, r: e => `<span class="mono">${esc(e.hashLinha)}</span>` },
+      { t: 'Texto bruto', v: e => e.bruto, r: e => `<span class="bruto">${esc(e.bruto)}</span>` }
+    ], evs, { porPagina: 100, vazio: 'Nenhum evento deste tipo.' });
+  };
+  desenhar();
+  $('#ev-tipo').onchange = e => { st.tipo = e.target.value; S.ui.tab.ev && (S.ui.tab.ev.pg = 0); desenhar(); };
+  $('#ev-data').onchange = e => { st.data = e.target.checked; desenhar(); };
+  $('#busca-ev').oninput = e => { (S.ui.tab.ev ||= { col: null, dir: -1, q: '', pg: 0 }).q = e.target.value; S.ui.tab.ev.pg = 0; desenhar(); };
+  $('#exp-eventos').onclick = () => {
+    const r = S.registros.get(key);
+    baixar(`eventos_${r.uf}_${r.mun}_z${r.zona}_s${r.secao}_t${r.turno}.csv`, csv(['data_hora_local', 'hora', 'tipo', 'aplicacao', 'nivel', 'id_urna', 'mensagem', 'hash_linha', 'arquivo', 'linha', 'na_data_eleicao'],
+      S.ui.evVisiveis.map(e => [e.dt, e.hora, e.tipo, e.app, e.nivel, e.urna, e.msg, e.hashLinha, e.arquivo, e.linha, e.naData ? 'sim' : 'nao'])));
+  };
+}
 
-            if (localStream) {
-                const call = peer.call(conn.peer, localStream, { metadata: { nickname: myNickname } });
-                mediaCalls[conn.peer] = call;
-            }
+/* =====================================================================
+   13. EXPORTAÇÕES (CSV ; com BOM UTF-8 e relatório texto)
+   ===================================================================== */
+function csv(cab, linhas) {
+  const e = v => { const s = v == null ? '' : String(v); return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  return '\ufeff' + [cab, ...linhas].map(l => l.map(e).join(';')).join('\r\n');
+}
+const dec = (n, d = 4) => n == null || !isFinite(n) ? '' : n.toFixed(d).replace('.', ',');
+function baixar(nome, conteudo, tipo = 'text/csv;charset=utf-8') {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([conteudo], { type: tipo })); a.download = nome;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  registrar('info', `Exportado: ${nome}`);
+}
+function sufixo() { const f = S.filtros; return `2026_t${S.turno}_${f.uf === 'todos' ? (f.exterior ? 'br+zz' : 'br') : f.uf}${f.mun ? '_' + f.mun : ''}${f.zona ? '_z' + f.zona : ''}${f.secao ? '_s' + f.secao : ''}_${f.tipo}_${hojeISO()}`; }
+const H24 = Array.from({ length: 24 }, (_, i) => 'h' + pad(i));
+function exportarNacional() { const A = S.ui.ultimaAgg; baixar(`votos_por_hora_${sufixo()}.csv`, csv(['hora', 'eventos_identificados', 'urnas_contribuintes', 'percentual_do_total', 'variacao_abs', 'variacao_pct'], linhasHora(A).map(r => [pad(r.hora) + 'h', r.eventos, r.urnas, dec(r.pct), r.varAbs ?? '', dec(r.varPct, 2)]))); }
+function exportarUF() { const A = S.ui.ultimaAgg; baixar(`votos_por_estado_${sufixo()}.csv`, csv(['uf', 'estado', 'fuso_urna', 'secoes_processadas', 'eventos_total', 'percentual_do_total', ...H24], linhasUF(A).sort((a, b) => a.uf.localeCompare(b.uf)).map(r => [r.uf.toUpperCase(), r.nome, r.fuso, r.secoes, r.total, dec(r.pct), ...r.horas]))); }
+async function exportarMun() { await resolverCS(); const A = S.ui.ultimaAgg; baixar(`votos_por_municipio_${sufixo()}.csv`, csv(['uf', 'cod_municipio_tse', 'municipio', 'logs_validos', 'secoes_com_urna_cadastro', 'eventos_total', 'percentual_do_total', ...H24], linhasMun(A).sort((a, b) => a.uf.localeCompare(b.uf) || a.nome.localeCompare(b.nome)).map(r => [r.uf.toUpperCase(), r.mun, r.nome, r.secoes, r.cadastro ?? '', r.total, dec(r.pct), ...r.horas]))); }
+function exportarRegistros() {
+  const regs = S.ui.ultimosRegs;
+  baixar(`registros_processados_${sufixo()}.csv`, csv(['pleito', 'turno', 'uf', 'cod_municipio', 'municipio', 'zona', 'secao', 'origem', 'situacao', 'arquivo', 'hash_ou_identificador', 'url', 'bytes', 'linhas', 'linhas_validas', 'linhas_invalidas', 'linhas_fora_catalogo', 'duplicadas', 'ids_urna', 'votos_computados_data', 'habilitados_data', 'confirmacoes_data', 'computados_fora_data', 'primeiro_voto', 'ultimo_voto', 'alertas', 'erro', 'processado_em', ...H24.map(h => 'computado_' + h)],
+    regs.map(r => [r.pleito, r.turno, (r.uf || '').toUpperCase(), r.mun, r.munNome, r.zona, r.secao, r.origem, r.status, r.arquivo || '', r.hash || '', r.url || '', r.bytes || '', r.linhas ?? '', r.validas ?? '', r.invalidas ?? '', r.foraCatalogo ?? '', r.duplicadas ?? '', (r.urnas || []).join(' '),
+      r.h ? soma(r.h.computado) : '', r.h ? soma(r.h.habilitado) : '', r.h ? soma(r.h.confirmado) : '', r.fora ? r.fora.computado : '', r.primeiro || '', r.ultimo || '', (r.alertas || []).join(' | '), r.erro || '', r.processadoEm || '', ...(r.h ? r.h.computado : H24.map(() => ''))])));
+}
+async function exportarRelatorio() {
+  const A = S.ui.ultimaAgg, f = S.filtros, Pt = P(), den = await obterDenominador();
+  const cob = den?.secoes ? Math.min(100, A.validos / den.secoes * 100) : null;
+  const L = [];
+  L.push('RELATÓRIO — PAINEL NACIONAL DE VOTAÇÃO POR HORA', '='.repeat(60));
+  L.push(`Gerado em: ${new Date().toLocaleString('pt-BR')}`);
+  L.push(`Eleição: 2026 — ${Pt.nome} (${Pt.data}) — pleito ${Pt.pleito}, eleição ${Pt.eleicao}`);
+  L.push(`Fonte: Tribunal Superior Eleitoral — ${TSE.BASE}/${TSE.CICLO}/arquivo-urna/${Pt.pleito}/ (logs de urna)`);
+  L.push(`Arquivos do TSE gerados em (mais recente lido): ${$('#h-geracao').textContent}`);
+  L.push(`Último processamento local: ${A.ultimo ? fmtDH(A.ultimo) : '—'}`);
+  L.push(`Situação da coleta: ${$('#h-status-txt').textContent}`, '');
+  L.push('ESCOPO (FILTROS)', '-'.repeat(60));
+  L.push(`UF: ${f.uf === 'todos' ? 'Brasil (27 UFs)' + (f.exterior ? ' + Exterior' : '') : f.uf.toUpperCase()} | Município: ${f.mun || 'todos'} | Zona: ${f.zona || 'todas'} | Seção: ${f.secao || 'todas'}`);
+  L.push(`Horas: ${pad(f.hIni)}h–${pad(f.hFim)}h (horário local da urna) | Tipo de evento: ${TIPO_ROT[f.tipo]}`, '');
+  L.push('CRITÉRIO DE CONTAGEM', '-'.repeat(60));
+  L.push('Linha do log com aplicação VOTA e mensagem "O voto do eleitor foi computado", com data igual à data da eleição.');
+  L.push('Deduplicação: data/hora + hash da linha (por seção); chave pleito|UF|município|zona|seção; hash do arquivo publicado no auxiliar.');
+  L.push('Validação prévia: Porto Walter/AC — 1º turno 6.520 eventos = 6.520 comparecimento oficial; 2º turno 4.792 = 4.792.', '');
+  L.push('ARQUIVOS', '-'.repeat(60));
+  L.push(`Registros no escopo: ${fmt(A.registros)}`);
+  L.push(`Logs válidos: ${fmt(A.validos)} (com alertas: ${fmt(A.alerta)}) | importados: ${fmt(A.importados)}`);
+  L.push(`Sem log publicado: ${fmt(A.semLog)} | Não encontrados (404): ${fmt(A.naoEnc)} | Inválidos: ${fmt(A.invalidos)} | Erros de rede/HTTP: ${fmt(A.erros)}`);
+  L.push(`Linhas com formato inválido: ${fmt(A.linhasInvalidas)} | Linhas válidas fora do catálogo: ${fmt(A.foraCatalogo)} | Eventos fora da data descartados: ${fmt(A.foraData)}`);
+  L.push(`Cobertura: ${cob == null ? 'denominador oficial indisponível' : `${fmt(A.validos)} de ${fmt(den.secoes)} seções com urna própria (${fmtPct(cob, 3)}) — ${den.fonte}`}`);
+  if (den && isFinite(den.comparecimento)) L.push(`Comparecimento oficial no escopo: ${fmt(den.comparecimento)}${cob >= 100 ? ` | Eventos identificados: ${fmt(A.total)} | Diferença: ${fmt(A.total - den.comparecimento)}` : ' (conferência não aplicável: cobertura < 100%)'}`);
+  L.push(cob != null && cob >= 100 ? 'RESULTADO: cobertura completa do escopo.' : 'RESULTADO: PARCIAL — números referem-se apenas às urnas processadas; não há extrapolação.', '');
+  L.push('TOTAL POR HORA', '-'.repeat(60));
+  linhasHora(A).forEach(r => L.push(`${pad(r.hora)}h  ${String(fmt(r.eventos)).padStart(14)}  ${fmtPct(r.pct).padStart(8)}  urnas: ${fmt(r.urnas)}`));
+  L.push(`TOTAL ${String(fmt(A.total)).padStart(14)}`, '');
+  L.push('LIMITAÇÕES IDENTIFICADAS', '-'.repeat(60));
+  ['Horário = relógio local da urna; o agregado nacional mistura fusos (AC −5; AM, MT, MS, RO, RR −4; Noronha −2; demais −3).',
+   'Votos em cédula, urnas sem log publicado ou logs inválidos não aparecem nos eventos.',
+   'Seções agregadas não têm urna própria; seus eleitores votam na urna da seção principal.',
+   'O log do 2º turno contém também o histórico do 1º turno; somente linhas da data da eleição são contadas.',
+   'Pacotes 7z/LZMA (ex.: 2022) não são descompactados nativamente pelo navegador.',
+   'Nenhuma associação entre horários e candidatos ou eleitores é feita; números de título/CPF no texto bruto são mascarados.'].forEach(x => L.push('- ' + x));
+  const alertasFreq = {}; S.ui.ultimosRegs.forEach(r => (r.alertas || []).forEach(a => { const k = a.replace(/\d+/g, 'N'); alertasFreq[k] = (alertasFreq[k] || 0) + 1; }));
+  if (Object.keys(alertasFreq).length) { L.push('', 'ALERTAS ENCONTRADOS NOS LOGS', '-'.repeat(60)); Object.entries(alertasFreq).sort((a, b) => b[1] - a[1]).forEach(([k, v]) => L.push(`${String(v).padStart(7)} × ${k}`)); }
+  baixar(`relatorio_${sufixo()}.txt`, '\ufeff' + L.join('\r\n'), 'text/plain;charset=utf-8');
+}
 
-            conn.on('data', data => {
-                peerLastSeen[conn.peer] = Date.now();
-                if (data.type === 'ping') {
-                    conn.send({ type: 'pong' });
-                    return;
-                }
-                if (data.type === 'pong') return;
-                
-                if (data.type === 'auth-error') { alert(data.message); resetUI(); } 
-                else if (data.type === 'sync-participants') { updateParticipants(data.list); ensureMeshConnections(); }
-                else if (data.type === 'chat') { renderChatMessage(data.nickname, data.message, false); }
-                else if (data.type === 'file') { renderFileMessage(data.nickname, data.fileName, data.data, data.fileType, false); }
-            });
-            conn.on('close', () => { handlePeerDisconnect(conn.peer); });
-            conn.on('error', err => console.log('Conn erro:', err));
-        }
+/* =====================================================================
+   14. AUTOTESTE DO PARSER — linhas reais de um log de 2026 (seção AC 01066/0004/0077),
+   usadas SOMENTE para teste; nunca entram nos totais do painel.
+   ===================================================================== */
+async function autoteste() {
+  const T = '\t';
+  const L = [
+    ['04/10/2026 06:08:04', 'INFO', '02293919', 'VOTA', 'Eleitor foi habilitado', '26DC7282B09C0460'],
+    ['04/10/2026 06:08:24', 'INFO', '02293919', 'VOTA', 'Voto confirmado para [Deputado Federal]', '2BF2DC110697C4B4'],
+    ['04/10/2026 06:09:08', 'INFO', '02293919', 'VOTA', 'Voto confirmado para [Presidente]', '98034E8EA14E42FE'],
+    ['04/10/2026 06:09:09', 'INFO', '02293919', 'VOTA', 'O voto do eleitor foi computado', '0A360BBED71F85E2'],
+    ['04/10/2026 06:09:10', 'INFO', '02293919', 'VOTA', 'Aguardando digitação do identificador do eleitor', '76DDECBA541A764F'],
+    ['23/09/2026 13:31:48', 'INFO', '02293919', 'LOGD', 'Início das operações do logd', 'EDECD0F5199A2185'],
+    ['04/10/2026 15:44:08', 'INFO', '02293919', 'VOTA', 'Inicio do Encerramento', 'D35F07418B8D395F']
+  ].map(c => c.join(T));
+  const texto = [...L, L[3] /* duplicata proposital */, '04/10/2026 06:1 TESTE_LINHA_TRUNCADA'].join('\r\n');
+  const r1 = analisarLogs([{ nome: 'teste.dat', texto }], '04/10/2026', true);
+  const r2 = analisarLogs([{ nome: 'teste.dat', texto }], '25/10/2026');
+  const casos = [
+    ['Reconhece 1 "voto computado" às 06h', r1.h.computado[6] === 1 && soma(r1.h.computado) === 1],
+    ['"Habilitado" e "confirmação" contados separadamente (1 e 2)', soma(r1.h.habilitado) === 1 && soma(r1.h.confirmado) === 2],
+    ['Duplicata descartada (data/hora + hash)', r1.duplicadas === 1],
+    ['Linha truncada registrada como não reconhecida', r1.invalidas === 1 && r1.amostrasInvalidas.length === 1],
+    ['Linhas fora do catálogo contadas (3)', r1.foraCatalogo === 3],
+    ['Encerramento detectado', r1.encerramento === true],
+    ['Filtro de data: evento de 04/10 é descartado no 2º turno', soma(r2.h.computado) === 0 && r2.fora.computado === 1],
+    ['Texto original preservado para auditoria', r1.eventos.some(e => e.tipo === 'computado' && e.bruto.includes('0A360BBED71F85E2'))],
+    ['Mascaramento de título/CPF no texto bruto', mascarar('Mesário 006769002445 registrado') === 'Mesário •••••••••••• registrado']
+  ];
+  // Teste do leitor ZIP nativo: compacta o texto com CompressionStream e lê de volta
+  if (S.suporte.descompressao && 'CompressionStream' in window) {
+    try {
+      const dados = new TextEncoder().encode(texto);
+      const comp = new Uint8Array(await new Response(new Blob([dados]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());
+      const nome = new TextEncoder().encode('logd.dat');
+      const lh = new Uint8Array(30 + nome.length), dvl = new DataView(lh.buffer);
+      dvl.setUint32(0, 0x04034b50, true); dvl.setUint16(4, 20, true); dvl.setUint16(8, 8, true); dvl.setUint32(18, comp.length, true); dvl.setUint32(22, dados.length, true); dvl.setUint16(26, nome.length, true); lh.set(nome, 30);
+      const cd = new Uint8Array(46 + nome.length), dvc = new DataView(cd.buffer);
+      dvc.setUint32(0, 0x02014b50, true); dvc.setUint16(10, 8, true); dvc.setUint32(20, comp.length, true); dvc.setUint32(24, dados.length, true); dvc.setUint16(28, nome.length, true); dvc.setUint32(42, 0, true); cd.set(nome, 46);
+      const eo = new Uint8Array(22), dve = new DataView(eo.buffer);
+      dve.setUint32(0, 0x06054b50, true); dve.setUint16(8, 1, true); dve.setUint16(10, 1, true); dve.setUint32(12, cd.length, true); dve.setUint32(16, lh.length + comp.length, true);
+      const zip = new Uint8Array(lh.length + comp.length + cd.length + eo.length); zip.set(lh, 0); zip.set(comp, lh.length); zip.set(cd, lh.length + comp.length); zip.set(eo, lh.length + comp.length + cd.length);
+      const logs = await extrairLogs(zip, 'teste-log.jez');
+      casos.push(['Leitor ZIP/Deflate nativo (DecompressionStream)', logs.length === 1 && logs[0].texto === DEC.decode(dados)]);
+    } catch (e) { casos.push(['Leitor ZIP/Deflate nativo (DecompressionStream): ' + e.message, false]); }
+  } else casos.push(['Leitor ZIP/Deflate nativo: API indisponível neste navegador', false]);
+  const ok = casos.every(c => c[1]);
+  $('#autoteste').innerHTML = casos.map(([n, v]) => `<li class="${v ? 'ok' : 'falha'}">${v ? '✓' : '✗'} ${esc(n)}</li>`).join('');
+  registrar(ok ? 'ok' : 'erro', `Autoteste do parser: ${casos.filter(c => c[1]).length}/${casos.length} verificações aprovadas.`);
+}
 
-        function handlePeerDisconnect(peerId) {
-            if (!dataConnections[peerId]) return;
-            const conn = dataConnections[peerId];
-            conn.close();
-            delete dataConnections[peerId];
-            delete peerLastSeen[peerId];
-            if (mediaCalls[peerId]) {
-                mediaCalls[peerId].close();
-                delete mediaCalls[peerId];
-            }
+/* =====================================================================
+   15. INTERFACE — preenchimento dos seletores e eventos
+   ===================================================================== */
+function opcoes(sel, lista, valorAtual) { sel.innerHTML = lista.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join(''); if (valorAtual != null && lista.some(o => o[0] === valorAtual)) sel.value = valorAtual; }
+async function aoMudarUF() {
+  const uf = $('#f-uf').value, mun = $('#f-mun');
+  opcoes($('#f-zona'), [['', 'Todas']]); opcoes($('#f-secao'), [['', 'Todas']]); $('#f-zona').disabled = $('#f-secao').disabled = true;
+  if (uf === 'todos') { opcoes(mun, [['', 'Todos']]); mun.disabled = true; return; }
+  opcoes(mun, [['', 'Carregando municípios…']]); mun.disabled = true;
+  try {
+    const cs = await carregarCS(uf);
+    if ($('#f-uf').value !== uf) return;
+    const pl = P().pleito, proc = new Map();
+    for (const r of S.registros.values()) if (r.pleito === pl && r.uf === uf && VALIDOS.has(r.status)) proc.set(r.mun, (proc.get(r.mun) || 0) + 1);
+    const lista = [...cs.municipios.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+      .map(m => [m.cd, `${m.nome} — ${fmt(m.urnas)} seções${proc.get(m.cd) ? ` · ${fmt(proc.get(m.cd))} processadas` : ''}`]);
+    opcoes(mun, [['', `Todos (${fmt(cs.municipios.size)})`], ...lista]); mun.disabled = false;
+  } catch (e) {
+    // Sem acesso ao cadastro: usa apenas os municípios já processados
+    const vistos = new Map(); for (const r of S.registros.values()) if (r.uf === uf) vistos.set(r.mun, r.munNome);
+    opcoes(mun, [['', 'Todos'], ...[...vistos].map(([c, n]) => [c, n])]); mun.disabled = !vistos.size;
+    registrar('aviso', `Relação de seções de ${uf.toUpperCase()} indisponível: ${descreverErro(e)}`);
+  }
+}
+async function aoMudarMun() {
+  const uf = $('#f-uf').value, mun = $('#f-mun').value, zona = $('#f-zona');
+  opcoes($('#f-secao'), [['', 'Todas']]); $('#f-secao').disabled = true;
+  if (!mun) { opcoes(zona, [['', 'Todas']]); zona.disabled = true; S.ui.munNome = null; return; }
+  try { const cs = await carregarCS(uf); const m = cs.municipios.get(mun); S.ui.munNome = m?.nome;
+    opcoes(zona, [['', 'Todas'], ...[...m.zonas.keys()].sort().map(z => [z, `Zona ${z} — ${fmt(m.zonas.get(z).filter(s => !s.principal).length)} seções`])]); zona.disabled = false; } catch {}
+}
+async function aoMudarZona() {
+  const uf = $('#f-uf').value, mun = $('#f-mun').value, z = $('#f-zona').value, sec = $('#f-secao');
+  if (!z) { opcoes(sec, [['', 'Todas']]); sec.disabled = true; return; }
+  try { const cs = await carregarCS(uf); const lista = cs.municipios.get(mun).zonas.get(z); const pl = P().pleito;
+    opcoes(sec, [['', 'Todas'], ...lista.map(s => [s.principal ? '' : s.secao, s.principal ? `${s.secao} (agregada à ${s.principal})` : `Seção ${s.secao}${s.agregadas.length ? ` (+${s.agregadas.join(', ')})` : ''}${VALIDOS.has(S.registros.get(chave(pl, s))?.status) ? ' ✓' : ''}`])]);
+    $$('#f-secao option').forEach(o => { if (o.textContent.includes('agregada')) o.disabled = true; }); sec.disabled = false; } catch {}
+}
+function ligarEventos() {
+  const re = () => { S.ui.animar = true; agendarRender(true); };
+  $('#f-turno').onchange = () => { S.turno = +$('#f-turno').value; S.ui.denChave = null; if (S.coleta.estado === 'pausado') { S.coleta.fila = []; S.coleta.retorno = []; S.coleta.pos = 0; definirEstado('ocioso'); } aoMudarUF().then(re); re(); };
+  $('#f-uf').onchange = () => { aoMudarUF(); re(); };
+  $('#f-mun').onchange = () => { aoMudarMun(); re(); };
+  $('#f-zona').onchange = () => { aoMudarZona(); re(); };
+  ['#f-secao', '#f-hini', '#f-hfim', '#f-exterior'].forEach(s => $(s).onchange = re);
+  $('#f-tipo').onchange = () => { $('#f-tipo-desc').textContent = CATALOGO.find(c => c.id === $('#f-tipo').value).desc; re(); };
+  $('#btn-testar').onclick = testarConexao;
+  $('#btn-iniciar').onclick = iniciarColeta;
+  $('#btn-pausar').onclick = pausarColeta;
+  $('#btn-validacao').onclick = async () => {
+    $('#f-turno').value = String(S.turno); $('#f-uf').value = 'ac'; await aoMudarUF();
+    $('#f-mun').value = '01066'; await aoMudarMun(); $('#c-limite').value = 0; $('#c-ordem').value = 'seq';
+    re(); registrar('info', 'Validação rápida: coleta integral das seções de Porto Walter/AC.'); iniciarColeta();
+  };
+  $('#btn-limpar').onclick = () => {
+    const pl = P().pleito, ks = [...S.registros.keys()].filter(k => k.startsWith(pl + '|'));
+    if (!ks.length || !confirm(`Apagar ${fmt(ks.length)} registros processados do ${P().nome}? Os arquivos poderão ser baixados de novo.`)) return;
+    ks.forEach(k => { S.registros.delete(k); S.eventosCache.delete(k); }); DB.apagar(ks);
+    S.coleta.fila = []; S.coleta.retorno = []; S.coleta.pos = 0; S.coleta.total = 0; S.coleta.cont = novoContador(); definirEstado('ocioso');
+    registrar('aviso', `${fmt(ks.length)} registros do ${P().nome} apagados.`); re();
+  };
+  // Importação (input + arrastar e soltar)
+  $('#imp-arquivos').onchange = e => { importarArquivos([...e.target.files]); e.target.value = ''; };
+  const drop = $('#drop');
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('sobre'); }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('sobre'); }));
+  drop.addEventListener('drop', e => importarArquivos([...e.dataTransfer.files]));
+  // Controles do gráfico
+  const seg = (id, fn) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $$(id + ' button').forEach(x => x.classList.toggle('ativo', x === b)); fn(b); re(); });
+  seg('#g-modo', b => S.ui.modo = b.dataset.modo);
+  seg('#g-tipo', b => S.ui.tipoGraf = b.dataset.v);
+  seg('#g-escala', b => S.ui.escala = b.dataset.v);
+  $('#g-recortar').onchange = e => { S.ui.recortar = e.target.checked; re(); };
+  const cv = $('#grafico');
+  cv.addEventListener('mousemove', tooltipGrafico);
+  cv.addEventListener('mouseleave', () => { $('#tooltip').classList.remove('vis'); S.ui.hover = null; desenharQuadro(1); });
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => desenharQuadro(1), 120); });
+  // Abas
+  $$('.abas button').forEach(b => b.onclick = () => { S.ui.aba = b.dataset.aba; $$('.abas button').forEach(x => x.classList.toggle('ativo', x === b)); $$('[data-painel]').forEach(p => p.hidden = p.dataset.painel !== S.ui.aba); renderAbaAtiva(); });
+  // Busca nas tabelas
+  ['hora', 'uf', 'mun', 'arq'].forEach(id => $('#busca-' + id).addEventListener('input', e => { (S.ui.tab[id] ||= { col: null, dir: -1, q: '', pg: 0 }).q = e.target.value; S.ui.tab[id].pg = 0; renderAbaAtiva(); }));
+  $('#arq-status').onchange = () => { (S.ui.tab.arq ||= { col: null, dir: -1, q: '', pg: 0 }).pg = 0; renderAbaAtiva(); };
+  // Ordenação, paginação e detalhes (delegação de eventos)
+  document.addEventListener('click', e => {
+    const th = e.target.closest('th[data-col]');
+    if (th && !th.classList.contains('nosort')) { const id = th.closest('[data-tabela]').dataset.tabela; const st = S.ui.tab[id]; const c = +th.dataset.col; st.dir = st.col === c ? -st.dir : -1; st.col = c; id === 'ev' ? $('#ev-tipo').dispatchEvent(new Event('change')) : renderAbaAtiva(); return; }
+    const pg = e.target.closest('[data-pg]');
+    if (pg) { const id = pg.closest('[data-tabela]').dataset.tabela; S.ui.tab[id].pg += +pg.dataset.pg; id === 'ev' ? $('#ev-tipo').dispatchEvent(new Event('change')) : renderAbaAtiva(); return; }
+    const ver = e.target.closest('[data-ver]'); if (ver) abrirDetalhes(ver.dataset.ver);
+  });
+  $('#modal-fechar').onclick = () => $('#modal').close();
+  $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') $('#modal').close(); });
+  // Exportações
+  $('#exp-nacional').onclick = exportarNacional; $('#exp-uf').onclick = exportarUF; $('#exp-mun').onclick = exportarMun;
+  $('#exp-registros').onclick = exportarRegistros; $('#exp-relatorio').onclick = exportarRelatorio;
+  $('#btn-limpar-ativ').onclick = () => { S.atividade = []; renderAtividade(); };
+  window.addEventListener('beforeunload', () => DB.gravarPendentes());
+}
 
-            if (isHost) {
-                const removed = participants.find(p => p.id === peerId);
-                const newList = participants.filter(p => p.id !== peerId);
-                updateParticipants(newList);
-                broadcastToMesh({ type: 'sync-participants', list: newList });
-                if(removed) showToast(`${removed.nickname} saiu da sala.`, 'fa-user-minus');
-            } else if (peerId === hostId) {
-                const newList = participants.filter(p => p.id !== hostId);
-                if (newList.length > 0) {
-                    const nextHost = newList[0];
-                    hostId = nextHost.id;
-                    showToast(`O Apresentador saiu. ${nextHost.nickname} agora é o Apresentador.`, 'fa-crown');
-                    
-                    if (myId === hostId) {
-                        isHost = true;
-                        database.ref('rooms/' + currentRoomName).update({ hostId: myId });
-                        const meIndex = newList.findIndex(p => p.id === myId);
-                        if(meIndex > -1) newList[meIndex].isHost = true;
-                        updateParticipants(newList);
-                        broadcastToMesh({ type: 'sync-participants', list: newList });
-                    } else {
-                        updateParticipants(newList);
-                    }
-                } else {
-                    alert('O apresentador encerrou a sala.'); resetUI();
-                }
-            }
-            removeVideoElement(peerId);
-        }
-
-        function startHeartbeat() {
-            if (heartbeatInterval) clearInterval(heartbeatInterval);
-            heartbeatInterval = setInterval(() => {
-                if (document.getElementById('room').style.display !== 'flex') return;
-                const now = Date.now();
-                Object.values(dataConnections).forEach(conn => {
-                    if (conn.open) conn.send({ type: 'ping' });
-                    if (now - (peerLastSeen[conn.peer] || now) > 2000) {
-                        console.warn('Timeout do peer:', conn.peer);
-                        handlePeerDisconnect(conn.peer);
-                    }
-                });
-            }, 1000);
-        }
-
-        function stopHeartbeat() {
-            if (heartbeatInterval) clearInterval(heartbeatInterval);
-            heartbeatInterval = null;
-        }
-
-        function ensureMeshConnections() {
-            participants.forEach(p => {
-                if (p.id !== myId && !dataConnections[p.id]) {
-                    const conn = peer.connect(p.id, { metadata: { nickname: myNickname } });
-                    setupDataConnectionEvents(conn);
-                }
-            });
-        }
-
-        function broadcastToMesh(data) { Object.values(dataConnections).forEach(conn => { if(conn.open) conn.send(data); }); }
-
-        function updateParticipants(list) {
-            participants = list;
-            const container = document.getElementById('participants-list');
-            container.innerHTML = '';
-            document.getElementById('part-count').innerText = list.length;
-            list.forEach(p => {
-                const initial = p.nickname.charAt(0).toUpperCase();
-                const badge = p.isHost ? '<span style="background:var(--primary-color); padding: 2px 6px; border-radius:4px; font-size:0.7rem; margin-left: auto;">HOST</span>' : '';
-                const isMe = p.id === myId ? '(Você)' : '';
-                container.innerHTML += `
-                    <div class="participant-item">
-                        <div class="avatar">${initial}</div>
-                        <span>${p.nickname} <small style="color:var(--text-muted)">${isMe}</small></span>
-                        ${badge}
-                    </div>
-                `;
-            });
-        }
-
-        async function toggleScreenShare() {
-            const btn = document.getElementById('btn-share-screen');
-            if (localStream) {
-                stopLocalStream();
-                btn.innerHTML = '<i class="fa-solid fa-display"></i> Compartilhar Minha Tela';
-                btn.classList.remove('btn-danger'); btn.classList.add('btn-primary');
-                removeVideoElement(myId); showToast('Compartilhamento encerrado.'); return;
-            }
-            const withAudio = document.getElementById('share-audio').checked;
-            const qualityStr = document.getElementById('video-quality').value;
-            const height = parseInt(qualityStr);
-            const frameRate = height >= 1080 ? 60 : 30;
-            try {
-                localStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { height: { ideal: height }, frameRate: { ideal: frameRate } },
-                    audio: withAudio ? { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 } : false
-                });
-                localStream.getVideoTracks()[0].onended = () => { toggleScreenShare(); };
-                renderVideoElement(myId, localStream, myNickname, true);
-                Object.values(dataConnections).forEach(conn => {
-                    if(conn.open) {
-                        const call = peer.call(conn.peer, localStream, { metadata: { nickname: myNickname } });
-                        mediaCalls[conn.peer] = call;
-                    }
-                });
-                btn.innerHTML = '<i class="fa-solid fa-stop"></i> Parar de Compartilhar';
-                btn.classList.remove('btn-primary'); btn.classList.add('btn-danger');
-                showToast('Você está compartilhando a tela!', 'fa-video');
-            } catch(e) {
-                console.error("Erro ao capturar tela:", e); showToast('Permissão negada ou erro na captura.', 'fa-triangle-exclamation');
-            }
-        }
-
-        function stopLocalStream() {
-            if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
-            Object.values(mediaCalls).forEach(call => call.close());
-            for(let id in mediaCalls) delete mediaCalls[id];
-        }
-
-        function handleIncomingCall(call) {
-            call.answer();
-            const callerNick = call.metadata ? call.metadata.nickname : 'Participante';
-            call.on('stream', remoteStream => {
-                renderVideoElement(call.peer, remoteStream, callerNick, false);
-                showToast(`${callerNick} começou a compartilhar a tela.`, 'fa-tv');
-            });
-            call.on('close', () => { removeVideoElement(call.peer); });
-            call.on('error', err => console.error('Call erro', err));
-            mediaCalls[call.peer] = call;
-        }
-
-        function renderVideoElement(peerId, stream, nickname, isLocal) {
-            let container = document.getElementById('vid-container-' + peerId);
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'vid-container-' + peerId;
-                container.className = 'video-container speaking';
-                container.innerHTML = `
-                    <video id="vid-${peerId}" autoplay playsinline ${isLocal ? 'muted' : ''}></video>
-                    <div class="video-overlay">
-                        <div class="video-label"><i class="fa-solid fa-user"></i> ${nickname} ${isLocal ? '(Você)' : ''}</div>
-                        <div class="video-controls">
-                            ${!isLocal ? `
-                                <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="1" 
-                                    onchange="document.getElementById('vid-${peerId}').volume = this.value" title="Volume">
-                            ` : ''}
-                            <button class="icon-btn" onclick="togglePiP('vid-${peerId}')" title="Picture-in-Picture"><i class="fa-solid fa-clone"></i></button>
-                            <button class="icon-btn" onclick="toggleFullscreen('vid-container-${peerId}')" title="Tela Cheia"><i class="fa-solid fa-expand"></i></button>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('video-grid').appendChild(container);
-            }
-            document.getElementById('vid-' + peerId).srcObject = stream;
-        }
-
-        function removeVideoElement(peerId) {
-            const container = document.getElementById('vid-container-' + peerId);
-            if (container) container.remove();
-        }
-        
-        async function togglePiP(videoId) {
-            const video = document.getElementById(videoId);
-            if (!video) return;
-            try {
-                if (document.pictureInPictureElement) await document.exitPictureInPicture();
-                else if (document.pictureInPictureEnabled) await video.requestPictureInPicture();
-            } catch(e) { console.error('PiP Error:', e); }
-        }
-
-        function toggleFullscreen(containerId) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            if (!document.fullscreenElement) {
-                if(container.requestFullscreen) container.requestFullscreen();
-                else if(container.webkitRequestFullscreen) container.webkitRequestFullscreen();
-            } else {
-                if(document.exitFullscreen) document.exitFullscreen();
-            }
-        }
-
-        function handleChatKeyPress(e) { if (e.key === 'Enter') sendChatMessage(); }
-
-        function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const msg = input.value.trim();
-            if (!msg) return;
-            renderChatMessage(myNickname, msg, true);
-            broadcastToMesh({ type: 'chat', nickname: myNickname, message: msg });
-            input.value = '';
-        }
-
-        function renderChatMessage(nickname, msg, isMine) {
-            const chatBox = document.getElementById('chat-messages');
-            chatBox.innerHTML += `
-                <div class="msg-bubble ${isMine ? 'mine' : ''}">
-                    <div class="msg-author">${nickname}</div>
-                    <div class="msg-text">${msg}</div>
-                </div>
-            `;
-            chatBox.parentElement.scrollTop = chatBox.parentElement.scrollHeight;
-        }
-
-        function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (file.size > 50 * 1024 * 1024) return alert('Arquivo muito grande! Limite de 50MB.');
-            showToast('Enviando ' + file.name + '...', 'fa-spinner fa-spin');
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const arrayBuffer = event.target.result;
-                const fileData = { type: 'file', nickname: myNickname, fileName: file.name, fileType: file.type, data: arrayBuffer };
-                renderFileMessage(myNickname, file.name, arrayBuffer, file.type, true);
-                broadcastToMesh(fileData);
-                document.getElementById('file-input').value = '';
-                showToast('Arquivo enviado!', 'fa-check');
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        function renderFileMessage(nickname, fileName, arrayBuffer, fileType, isMine) {
-            const chatBox = document.getElementById('chat-messages');
-            const blob = new Blob([arrayBuffer], { type: fileType });
-            const url = URL.createObjectURL(blob);
-            let icon = 'fa-file';
-            if (fileType.startsWith('image/')) icon = 'fa-file-image';
-            else if (fileType.startsWith('video/')) icon = 'fa-file-video';
-            else if (fileType.startsWith('application/pdf')) icon = 'fa-file-pdf';
-            chatBox.innerHTML += `
-                <div class="msg-bubble ${isMine ? 'mine' : ''}">
-                    <div class="msg-author">${nickname}</div>
-                    <div class="msg-text">
-                        <a href="${url}" download="${fileName}" class="file-download-link">
-                            <i class="fa-solid ${icon}"></i> ${fileName}
-                        </a>
-                    </div>
-                </div>
-            `;
-            chatBox.parentElement.scrollTop = chatBox.parentElement.scrollHeight;
-        }
-
-        function leaveRoom() { if(confirm('Tem certeza que deseja sair?')) resetUI(); }
-
-        function resetUI() {
-            stopHeartbeat();
-            stopLocalStream();
-            if (peer) { peer.destroy(); peer = null; }
-            participants = [];
-            for(let id in dataConnections) delete dataConnections[id];
-            for(let id in mediaCalls) delete mediaCalls[id];
-            document.getElementById('video-grid').innerHTML = '';
-            document.getElementById('participants-list').innerHTML = '';
-            document.getElementById('chat-messages').innerHTML = '';
-            document.getElementById('room').style.display = 'none';
-            document.getElementById('lobby').style.display = 'flex';
-        }
-
-        window.addEventListener('beforeunload', (e) => {
-            if (peer && !peer.destroyed) { e.preventDefault(); e.returnValue = ''; }
-        });
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            const roomIdParam = params.get('room');
-            if (roomIdParam) {
-                switchLobbyTab('join');
-                document.getElementById('join-room-id').value = roomIdParam;
-                document.getElementById('nickname').focus();
-            }
-        });
-    </script>
+/* =====================================================================
+   16. INICIALIZAÇÃO
+   ===================================================================== */
+async function iniciar() {
+  // Seletores fixos
+  opcoes($('#f-uf'), [['todos', 'Brasil inteiro'], ...UFS.map(([s, n]) => [s, `${s.toUpperCase()} — ${n}`])]);
+  const hs = Array.from({ length: 24 }, (_, h) => [String(h), pad(h) + 'h']);
+  opcoes($('#f-hini'), hs, '0'); opcoes($('#f-hfim'), hs, '23');
+  opcoes($('#f-tipo'), CATALOGO.map(c => [c.id, c.rotulo + (c.principal ? ' (critério principal)' : ' (contexto)')]), 'computado');
+  $('#f-tipo-desc').textContent = CATALOGO[0].desc;
+  opcoes($('#arq-status'), [['', 'Todas as situações'], ...Object.entries(STATUS).map(([k, v]) => [k, v[0]])]);
+  // Recursos do navegador
+  try { new DecompressionStream('deflate-raw'); S.suporte.descompressao = true; } catch { S.suporte.descompressao = false; }
+  const idb = await DB.abrir();
+  const avisos = [];
+  if (!S.suporte.descompressao) avisos.push('Este navegador não suporta <code>DecompressionStream("deflate-raw")</code>, necessário para abrir os arquivos <code>.jez</code>. Use Chrome/Edge 103+, Firefox 113+ ou Safari 16.4+. Ainda é possível importar <code>logd.dat</code> já descompactado.');
+  if (!idb) avisos.push('IndexedDB indisponível: os dados processados ficarão apenas na memória desta aba.');
+  if (avisos.length) mostrarBanner('#banner-suporte', 'aviso', avisos.join('<br>'));
+  // Restaura registros persistidos (apenas dados de logs reais previamente processados)
+  const salvos = await DB.carregarTodos();
+  salvos.forEach(r => S.registros.set(r.key, r));
+  if (salvos.length) registrar('info', `${fmt(salvos.length)} registro(s) restaurado(s) do armazenamento local (IndexedDB). Arquivos já processados não serão baixados de novo.`);
+  ligarEventos();
+  definirEstado('ocioso');
+  renderAtividade();
+  S.ui.animar = true; agendarRender(true);
+  autoteste();
+}
+iniciar();
+</script>
 </body>
 </html>
